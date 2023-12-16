@@ -1,16 +1,15 @@
 package db
 
-import "database/sql"
 
-type PollIndexParams struct {
-	Currentpollindex sql.NullInt64 `db:"currentpollindex"`
-	ID               string        `db:"id"`
+type OptionRow struct {
+	Optionkey   string `json:"optionkey" db:"optionkey"`
+	Optionvalue string `json:"optionvalue" db:"optionvalue"`
 }
 
 type CurrPollIndexResult struct {
 	ID       string
 	Question string
-	Options  []GetPollOptionsRow
+	Options  []OptionRow `json:"options"`
 }
 
 type VoteParams struct {

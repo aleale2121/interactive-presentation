@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (store *SQLStore) Vote(ctx context.Context, arg VoteParams) error {
+func (store *SQLStore) VoteCurrentPollTx(ctx context.Context, arg VoteParams) error {
 
 	err := store.execTx(ctx, func(q *Queries) error {
 		pollID,err:=uuid.Parse(arg.Pollid)

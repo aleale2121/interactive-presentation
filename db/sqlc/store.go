@@ -5,20 +5,25 @@ import (
 	"database/sql"
 	"fmt"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 // Store defines all functions to execute db queries and transactions
 type Store interface {
 	Querier
-	Vote(context.Context, VoteParams) error
-	UpdateCurrentPollTx(context.Context, PollIndexParams) (CurrPollIndexResult, error)
-	GetCurrentPoll(context.Context, PollIndexParams) (CurrPollIndexResult, error)
+	GetCurrentPoll(context.Context, uuid.UUID) (CurrPollIndexResult, error)
+	GetCurrentPoll2(ctx context.Context, id uuid.UUID) (CurrPollIndexResult, error)
+	UpdateCurrentPollToForwardTx(ctx context.Context, id uuid.UUID) (CurrPollIndexResult, error)
+	UpdateCurrentPollToPreviousTx(ctx context.Context, id uuid.UUID) (CurrPollIndexResult, error) 
+	VoteCurrentPollTx(context.Context, VoteParams) error
+
 }
 
 // SQLStore provides all functions to execute SQL queries and transactions
 type SQLStore struct {
-	db     *sql.DB
-	mu     sync.Mutex
+	db *sql.DB
+	mu sync.Mutex
 	*Queries
 }
 

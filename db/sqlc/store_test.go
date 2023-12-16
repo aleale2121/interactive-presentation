@@ -19,9 +19,7 @@ func TestUpdateCurrentPollTx(t *testing.T) {
 	}
 
 	for i := 0; i < n-1; i++ {
-		currPoll, err := store.UpdateCurrentPollTx(context.Background(), PollIndexParams{
-			ID: presID.String(),
-		})
+		currPoll, err := store.UpdateCurrentPollToForwardTx(context.Background(), presID)
 
 		require.NoError(t, err)
 		require.NotEmpty(t, currPoll)
@@ -41,14 +39,14 @@ func TestVote(t *testing.T) {
 
 	presID := createRandomPresentation(t)
 	poll := createPresentationPoll(t, presID)
-	pollOptions := make([]string,0,10)
+	pollOptions := make([]string, 0, 10)
 	for i := 0; i < n; i++ {
 		optionKey := createRandomPollOption(t, poll)
 		pollOptions = append(pollOptions, optionKey)
 	}
 
 	for i := 0; i < n; i++ {
-		err := store.Vote(context.Background(), VoteParams{
+		err := store.VoteCurrentPollTx(context.Background(), VoteParams{
 			PresentationID: presID.String(),
 			Pollid:         poll.ID.String(),
 			Optionkey:      pollOptions[i%2],
@@ -72,89 +70,87 @@ func TestVote(t *testing.T) {
 }
 
 func TestUpdateCurrentPollTxDeadlock(t *testing.T) {
-		store := NewStore(testDB)
-		n := 15
+	store := NewStore(testDB)
+	n := 15
 
-		presID := createRandomPresentation(t)
-		for i := 0; i < n; i++ {
-			createPresentationPoll(t, presID)
-		}
+	presID := createRandomPresentation(t)
+	for i := 0; i < n; i++ {
+		createPresentationPoll(t, presID)
+	}
 
-		errs := make(chan error)
-		results := make(chan CurrPollIndexResult)
+	errs := make(chan error)
+	results := make(chan CurrPollIndexResult)
 
-		// run n concurrent vote transaction
-		for i := 0; i < n-1; i++ {
-			go func() {
-				currPoll, err := store.UpdateCurrentPollTx(context.Background(), PollIndexParams{
-					ID: presID.String(),
-				})
-				errs <- err
-				results <- currPoll
+	// run n concurrent vote transaction
+	for i := 0; i < n-1; i++ {
+		go func() {
+			currPoll, err := store.UpdateCurrentPollToForwardTx(context.Background(), presID)
+			errs <- err
+			results <- currPoll
 
-			}()
-		}
+		}()
+	}
 
-		for i := 0; i < n-1; i++ {
-			err := <-errs
-				require.NoError(t, err)
-			currPoll := <-results
-				require.NotEmpty(t, currPoll)
-		}
-
-		close(errs)
-		close(results)
-		// check the final updated presentation
-		presentation, err := testQueries.GetPresentation(context.Background(), presID)
-
+	for i := 0; i < n-1; i++ {
+		err := <-errs
 		require.NoError(t, err)
-		require.NotEmpty(t, presentation)
-		require.Equal(t, presentation.Currentpollindex.Int32, int32(n-1))
+		currPoll := <-results
+		require.NotEmpty(t, currPoll)
+	}
+
+	close(errs)
+	close(results)
+	// check the final updated presentation
+	presentation, err := testQueries.GetPresentation(context.Background(), presID)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, presentation)
+	require.Equal(t, presentation.Currentpollindex.Int32, int32(n-1))
 }
 
 func TestVoteDeadlock(t *testing.T) {
-		store := NewStore(testDB)
-		n := 100
+	store := NewStore(testDB)
+	n := 100
 
-		presID := createRandomPresentation(t)
-		poll := createPresentationPoll(t, presID)
-		pollOptions := make([]string,0, 10)
-		for i := 0; i < n; i++ {
-			optionKey := createRandomPollOption(t, poll)
-			pollOptions = append(pollOptions, optionKey)
-		}
+	presID := createRandomPresentation(t)
+	poll := createPresentationPoll(t, presID)
+	pollOptions := make([]string, 0, 10)
+	for i := 0; i < n; i++ {
+		optionKey := createRandomPollOption(t, poll)
+		pollOptions = append(pollOptions, optionKey)
+	}
 
-		errs := make(chan error)
+	errs := make(chan error)
 
-		// run n concurrent vote transaction
-		for i := 0; i < n; i++ {
-			go func(j int) {
-				err := store.Vote(context.Background(), VoteParams{
-					PresentationID: presID.String(),
-					Pollid:         poll.ID.String(),
-					Optionkey:      pollOptions[j],
-					Clientid:       util.RandomUUID().String(),
-				})
+	// run n concurrent vote transaction
+	for i := 0; i < n; i++ {
+		go func(j int) {
+			err := store.VoteCurrentPollTx(context.Background(), VoteParams{
+				PresentationID: presID.String(),
+				Pollid:         poll.ID.String(),
+				Optionkey:      pollOptions[j],
+				Clientid:       util.RandomUUID().String(),
+			})
 
-				errs <- err
-			}(i/2)
-		}
+			errs <- err
+		}(i / 2)
+	}
 
-		for i := 0; i < n; i++ {
-			err := <-errs
-			require.NoError(t, err)
-		}
-		// check the final updated votes
-		votes, err := testQueries.GetPollVotes(context.Background(), GetPollVotesParams{
-			ID:   presID,
-			ID_2: poll.ID,
-		})
-
+	for i := 0; i < n; i++ {
+		err := <-errs
 		require.NoError(t, err)
-		require.NotEmpty(t, votes)
-		require.Len(t, votes, n)
-		for _, vote := range votes {
-			require.NotEmpty(t, vote)
-		}
-	
+	}
+	// check the final updated votes
+	votes, err := testQueries.GetPollVotes(context.Background(), GetPollVotesParams{
+		ID:   presID,
+		ID_2: poll.ID,
+	})
+
+	require.NoError(t, err)
+	require.NotEmpty(t, votes)
+	require.Len(t, votes, n)
+	for _, vote := range votes {
+		require.NotEmpty(t, vote)
+	}
+
 }

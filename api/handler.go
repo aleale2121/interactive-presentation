@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	db "github.com/aleale2121/interactive-presentation/db/sqlc"
@@ -35,10 +34,13 @@ func (server *Server) setupRouter() {
 	router := gin.Default()
 
 	router.POST("/presentations", server.CreatePresentationAndPolls)
-	router.POST("/presentation", server.CreatePresentation)
 
 	router.GET("/presentations/:presentation_id/polls/current", server.GetCurrentPoll)
-	router.PUT("/presentations/:presentation_id/polls/current", server.UpdateCurrentPresentation)
+	router.GET("/presentations/:presentation_id/polls/current2", server.GetCurrentPoll2)
+
+	router.PUT("/presentations/:presentation_id/polls/current/forward", server.SlidePresentationPollToForwardHandler)
+	router.PUT("/presentations/:presentation_id/polls/current/backward", server.SlidePresentationPollToPreviousHandler)
+
 	router.POST("/presentations/:presentation_id/polls/current/votes", server.Vote)
 	router.GET("/presentations/:presentation_id/polls/:poll_id/votes", server.PollVotes)
 
@@ -134,24 +136,49 @@ func (server *Server) CreatePresentationAndPolls(c *gin.Context) {
 	})
 }
 
-func (server *Server) UpdateCurrentPresentation(c *gin.Context) {
-	log.Println("Updating")
-	presentationID := c.Param("presentation_id")
-	result, err := server.store.UpdateCurrentPollTx(context.Background(), db.PollIndexParams{
-		ID: presentationID,
-	})
-
+func (server *Server) SlidePresentationPollToForwardHandler(c *gin.Context) {
+	presentationID, err := uuid.Parse(c.Param("presentation_id"))
 	if err != nil {
-		log.Println("Error update current presentation")
-		log.Println(err)
-		c.AbortWithStatus(http.StatusNotFound)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	result, err := server.store.UpdateCurrentPollToForwardTx(context.Background(), presentationID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	var response models.PollResponse
 	response.ID = result.ID
 	response.Question = result.Question
-	log.Println(result)
+
+	for _, opt := range result.Options {
+		response.Options = append(response.Options, models.OptionResponse{
+			OptionKey:   opt.Optionkey,
+			OptionValue: opt.Optionvalue,
+		})
+	}
+	c.JSON(http.StatusOK, response)
+}
+
+func (server *Server) SlidePresentationPollToPreviousHandler(c *gin.Context) {
+	presentationID, err := uuid.Parse(c.Param("presentation_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	result, err := server.store.UpdateCurrentPollToPreviousTx(context.Background(), presentationID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var response models.PollResponse
+	response.ID = result.ID
+	response.Question = result.Question
+
 	for _, opt := range result.Options {
 		response.Options = append(response.Options, models.OptionResponse{
 			OptionKey:   opt.Optionkey,
@@ -162,11 +189,38 @@ func (server *Server) UpdateCurrentPresentation(c *gin.Context) {
 }
 
 func (server *Server) GetCurrentPoll(c *gin.Context) {
-	presentationID := c.Param("presentation_id")
+	presentationID, err := uuid.Parse(c.Param("presentation_id"))
+	if err != nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	result, err := server.store.GetCurrentPoll(context.Background(),  presentationID)
 
-	result, err := server.store.GetCurrentPoll(context.Background(), db.PollIndexParams{
-		ID: presentationID,
-	})
+	if err != nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	var response models.PollResponse
+	response.ID = result.ID
+	response.Question = result.Question
+
+	for _, opt := range result.Options {
+		response.Options = append(response.Options, models.OptionResponse{
+			OptionKey:   opt.Optionkey,
+			OptionValue: opt.Optionvalue,
+		})
+	}
+	c.JSON(http.StatusOK, response)
+}
+
+func (server *Server) GetCurrentPoll2(c *gin.Context) {
+	presentationID, err := uuid.Parse(c.Param("presentation_id"))
+	if err != nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	result, err := server.store.GetCurrentPoll2(context.Background(),  presentationID)
 
 	if err != nil {
 		c.AbortWithStatus(http.StatusNotFound)
@@ -195,7 +249,7 @@ func (server *Server) Vote(c *gin.Context) {
 		return
 	}
 
-	err := server.store.Vote(context.Background(), db.VoteParams{
+	err := server.store.VoteCurrentPollTx(context.Background(), db.VoteParams{
 		PresentationID: presentationID,
 		Pollid:         vote.PollID,
 		Optionkey:      vote.Key,

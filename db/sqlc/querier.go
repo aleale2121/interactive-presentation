@@ -25,9 +25,14 @@ type Querier interface {
 	GetPollVotes(ctx context.Context, arg GetPollVotesParams) ([]GetPollVotesRow, error)
 	GetPollsCount(ctx context.Context, presentationid uuid.UUID) (int64, error)
 	GetPresentation(ctx context.Context, id uuid.UUID) (Presentation, error)
+	GetPresentationCurrentPoll(ctx context.Context, presentationid uuid.UUID) (GetPresentationCurrentPollRow, error)
+	GetPresentationCurrentPoll2(ctx context.Context, presentationid uuid.UUID) (GetPresentationCurrentPoll2Row, error)
 	GetPresentationPolls(ctx context.Context, presentationid uuid.UUID) ([]GetPresentationPollsRow, error)
 	GetVote(ctx context.Context, pollid uuid.UUID) ([]GetVoteRow, error)
-	UpdateCurrPollIndex(ctx context.Context, arg UpdateCurrPollIndexParams) (sql.NullInt32, error)
+	MoveBackwardToPreviousPoll(ctx context.Context, presentationid uuid.UUID) (MoveBackwardToPreviousPollRow, error)
+	MoveForwardToNextPoll(ctx context.Context, presentationid uuid.UUID) (MoveForwardToNextPollRow, error)
+	UpdateCurrPollIndexBackward(ctx context.Context, presentationid uuid.UUID) (Presentation, error)
+	UpdateCurrPollIndexForward(ctx context.Context, presentationid uuid.UUID) (Presentation, error)
 }
 
 var _ Querier = (*Queries)(nil)
