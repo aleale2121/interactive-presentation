@@ -24,3 +24,6 @@ sqlc:
 test:
 	go test -timeout 3m -v -cover -short ./...
 
+bench_test:
+	go test -bench=. -count 10 -run=^# ./...
+

@@ -36,7 +36,6 @@ func (server *Server) setupRouter() {
 	router.POST("/presentations", server.CreatePresentationAndPolls)
 
 	router.GET("/presentations/:presentation_id/polls/current", server.GetCurrentPoll)
-	router.GET("/presentations/:presentation_id/polls/current2", server.GetCurrentPoll2)
 
 	router.PUT("/presentations/:presentation_id/polls/current/forward", server.SlidePresentationPollToForwardHandler)
 	router.PUT("/presentations/:presentation_id/polls/current/backward", server.SlidePresentationPollToPreviousHandler)
@@ -194,33 +193,7 @@ func (server *Server) GetCurrentPoll(c *gin.Context) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
-	result, err := server.store.GetCurrentPoll(context.Background(),  presentationID)
-
-	if err != nil {
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	}
-
-	var response models.PollResponse
-	response.ID = result.ID
-	response.Question = result.Question
-
-	for _, opt := range result.Options {
-		response.Options = append(response.Options, models.OptionResponse{
-			OptionKey:   opt.Optionkey,
-			OptionValue: opt.Optionvalue,
-		})
-	}
-	c.JSON(http.StatusOK, response)
-}
-
-func (server *Server) GetCurrentPoll2(c *gin.Context) {
-	presentationID, err := uuid.Parse(c.Param("presentation_id"))
-	if err != nil {
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	}
-	result, err := server.store.GetCurrentPoll2(context.Background(),  presentationID)
+	result, err := server.store.GetCurrentPoll(context.Background(), presentationID)
 
 	if err != nil {
 		c.AbortWithStatus(http.StatusNotFound)

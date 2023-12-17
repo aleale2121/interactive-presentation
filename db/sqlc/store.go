@@ -13,7 +13,6 @@ import (
 type Store interface {
 	Querier
 	GetCurrentPoll(context.Context, uuid.UUID) (CurrPollIndexResult, error)
-	GetCurrentPoll2(ctx context.Context, id uuid.UUID) (CurrPollIndexResult, error)
 	UpdateCurrentPollToForwardTx(ctx context.Context, id uuid.UUID) (CurrPollIndexResult, error)
 	UpdateCurrentPollToPreviousTx(ctx context.Context, id uuid.UUID) (CurrPollIndexResult, error) 
 	VoteCurrentPollTx(context.Context, VoteParams) error

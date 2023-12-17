@@ -59,27 +59,6 @@ SELECT
 SELECT id
 FROM presentations_cte;
 
-
--- name: UpdateCurrPollIndexForward :one
-UPDATE presentations
-SET currentpollindex = LEAST(currentpollindex + 1, (
-  SELECT MAX(pollindex)
-  FROM polls
-  WHERE polls.presentationid = $1
-))
-WHERE id = $1
-RETURNING id, currentpollindex;
-
--- name: UpdateCurrPollIndexBackward :one
-UPDATE presentations
-SET currentpollindex = GREATEST(currentpollindex - 1, (
-  SELECT MIN(pollindex)
-  FROM polls
-  WHERE polls.presentationid = $1
-))
-WHERE id = $1
-RETURNING id, currentpollindex;
-
 -- name: GetPollsCount :one
 SELECT COUNT(*) AS polls_count
 FROM polls
@@ -114,40 +93,16 @@ WHERE p.presentationid = $1 and p.pollindex=(SELECT currentpollindex
   WHERE id=$1);
 
 
--- name: GetPresentationCurrentPoll2 :one
-SELECT
-  p.id AS id,
-  p.question AS question,
-  jsonb_agg(
-    jsonb_build_object(
-      'optionkey', o.optionkey,
-      'optionvalue', o.optionvalue
-    )
-  ) AS options
-FROM polls AS p
-INNER JOIN options AS o ON o.pollid = p.id
-INNER JOIN presentations AS pr ON p.presentationid = pr.id AND p.pollindex=pr.currentpollindex
-WHERE p.presentationid = $1
-GROUP BY p.id, p.question
-LIMIT 1;
-
-
 -- name: MoveForwardToNextPoll :one
-WITH
-  max_poll_index_cte
-  AS
-  (
-    SELECT
-      max(pollindex) AS max_poll_index
-    FROM polls
-    WHERE polls.presentationid = $1
-  )
-, updated_polls_cte AS (
-UPDATE presentations
-    SET currentpollindex = LEAST(currentpollindex + 1, (SELECT max_poll_index
-FROM max_poll_index_cte))
-    WHERE id = $1
-RETURNING id, currentpollindex
+WITH updated_polls_cte AS(
+   UPDATE presentations
+	SET currentpollindex = LEAST(currentpollindex + 1, (
+	  SELECT max(pollindex)
+	  FROM polls
+	  WHERE polls.presentationid = $1
+	))
+	WHERE id = $1
+   RETURNING id, currentpollindex
 )
 SELECT
   p.id AS id,
@@ -158,27 +113,23 @@ SELECT
       'optionvalue', o.optionvalue
     )) AS options
   FROM options o
-  WHERE o.pollid = p.id
+  INNER JOIN polls p ON o.pollid = p.id
+  WHERE p.presentationid = upc.id AND p.pollindex=upc.currentpollindex
   ) AS options
-FROM polls p, updated_polls_cte upc
-WHERE p.presentationid = upc.id and p.pollindex=upc.currentpollindex;
+FROM polls p
+INNER JOIN updated_polls_cte upc ON p.presentationid = upc.id AND p.pollindex=upc.currentpollindex;
+
 
 -- name: MoveBackwardToPreviousPoll :one
-WITH
-  min_poll_index_cte
-  AS
-  (
-    SELECT
-      min(pollindex) AS min_poll_index
-    FROM polls
-    WHERE polls.presentationid = $1
-  )
-, updated_polls_cte AS (
-    UPDATE presentations
-        SET currentpollindex = GREATEST(currentpollindex - 1, (SELECT min_poll_index
-    FROM min_poll_index_cte))
-        WHERE id = $1
-    RETURNING id, currentpollindex
+WITH updated_polls_cte AS(
+   UPDATE presentations
+	SET currentpollindex = GREATEST(currentpollindex - 1, (
+	  SELECT min(pollindex)
+	  FROM polls
+	  WHERE polls.presentationid = $1
+	))
+	WHERE id = $1
+   RETURNING id, currentpollindex
 )
 SELECT
   p.id AS id,
@@ -189,7 +140,8 @@ SELECT
       'optionvalue', o.optionvalue
     )) AS options
   FROM options o
-  WHERE o.pollid = p.id
+  INNER JOIN polls p ON o.pollid = p.id
+  WHERE p.presentationid = upc.id AND p.pollindex=upc.currentpollindex
   ) AS options
-FROM polls p, updated_polls_cte upc
-WHERE p.presentationid = upc.id and p.pollindex=upc.currentpollindex;
+FROM polls p
+INNER JOIN updated_polls_cte upc ON p.presentationid = upc.id AND p.pollindex=upc.currentpollindex;

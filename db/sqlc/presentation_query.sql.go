@@ -186,53 +186,16 @@ func (q *Queries) GetPresentationCurrentPoll(ctx context.Context, presentationid
 	return i, err
 }
 
-const getPresentationCurrentPoll2 = `-- name: GetPresentationCurrentPoll2 :one
-SELECT
-  p.id AS id,
-  p.question AS question,
-  jsonb_agg(
-    jsonb_build_object(
-      'optionkey', o.optionkey,
-      'optionvalue', o.optionvalue
-    )
-  ) AS options
-FROM polls AS p
-INNER JOIN options AS o ON o.pollid = p.id
-INNER JOIN presentations AS pr ON p.presentationid = pr.id AND p.pollindex=pr.currentpollindex
-WHERE p.presentationid = $1
-GROUP BY p.id, p.question
-LIMIT 1
-`
-
-type GetPresentationCurrentPoll2Row struct {
-	ID       uuid.UUID       `db:"id"`
-	Question string          `db:"question"`
-	Options  json.RawMessage `db:"options"`
-}
-
-func (q *Queries) GetPresentationCurrentPoll2(ctx context.Context, presentationid uuid.UUID) (GetPresentationCurrentPoll2Row, error) {
-	row := q.db.QueryRowContext(ctx, getPresentationCurrentPoll2, presentationid)
-	var i GetPresentationCurrentPoll2Row
-	err := row.Scan(&i.ID, &i.Question, &i.Options)
-	return i, err
-}
-
 const moveBackwardToPreviousPoll = `-- name: MoveBackwardToPreviousPoll :one
-WITH
-  min_poll_index_cte
-  AS
-  (
-    SELECT
-      min(pollindex) AS min_poll_index
-    FROM polls
-    WHERE polls.presentationid = $1
-  )
-, updated_polls_cte AS (
-    UPDATE presentations
-        SET currentpollindex = GREATEST(currentpollindex - 1, (SELECT min_poll_index
-    FROM min_poll_index_cte))
-        WHERE id = $1
-    RETURNING id, currentpollindex
+WITH updated_polls_cte AS(
+   UPDATE presentations
+	SET currentpollindex = GREATEST(currentpollindex - 1, (
+	  SELECT min(pollindex)
+	  FROM polls
+	  WHERE polls.presentationid = $1
+	))
+	WHERE id = $1
+   RETURNING id, currentpollindex
 )
 SELECT
   p.id AS id,
@@ -243,10 +206,11 @@ SELECT
       'optionvalue', o.optionvalue
     )) AS options
   FROM options o
-  WHERE o.pollid = p.id
+  INNER JOIN polls p ON o.pollid = p.id
+  WHERE p.presentationid = upc.id AND p.pollindex=upc.currentpollindex
   ) AS options
-FROM polls p, updated_polls_cte upc
-WHERE p.presentationid = upc.id and p.pollindex=upc.currentpollindex
+FROM polls p
+INNER JOIN updated_polls_cte upc ON p.presentationid = upc.id AND p.pollindex=upc.currentpollindex
 `
 
 type MoveBackwardToPreviousPollRow struct {
@@ -263,21 +227,15 @@ func (q *Queries) MoveBackwardToPreviousPoll(ctx context.Context, presentationid
 }
 
 const moveForwardToNextPoll = `-- name: MoveForwardToNextPoll :one
-WITH
-  max_poll_index_cte
-  AS
-  (
-    SELECT
-      max(pollindex) AS max_poll_index
-    FROM polls
-    WHERE polls.presentationid = $1
-  )
-, updated_polls_cte AS (
-UPDATE presentations
-    SET currentpollindex = LEAST(currentpollindex + 1, (SELECT max_poll_index
-FROM max_poll_index_cte))
-    WHERE id = $1
-RETURNING id, currentpollindex
+WITH updated_polls_cte AS(
+   UPDATE presentations
+	SET currentpollindex = LEAST(currentpollindex + 1, (
+	  SELECT max(pollindex)
+	  FROM polls
+	  WHERE polls.presentationid = $1
+	))
+	WHERE id = $1
+   RETURNING id, currentpollindex
 )
 SELECT
   p.id AS id,
@@ -288,10 +246,11 @@ SELECT
       'optionvalue', o.optionvalue
     )) AS options
   FROM options o
-  WHERE o.pollid = p.id
+  INNER JOIN polls p ON o.pollid = p.id
+  WHERE p.presentationid = upc.id AND p.pollindex=upc.currentpollindex
   ) AS options
-FROM polls p, updated_polls_cte upc
-WHERE p.presentationid = upc.id and p.pollindex=upc.currentpollindex
+FROM polls p
+INNER JOIN updated_polls_cte upc ON p.presentationid = upc.id AND p.pollindex=upc.currentpollindex
 `
 
 type MoveForwardToNextPollRow struct {
@@ -304,41 +263,5 @@ func (q *Queries) MoveForwardToNextPoll(ctx context.Context, presentationid uuid
 	row := q.db.QueryRowContext(ctx, moveForwardToNextPoll, presentationid)
 	var i MoveForwardToNextPollRow
 	err := row.Scan(&i.ID, &i.Question, &i.Options)
-	return i, err
-}
-
-const updateCurrPollIndexBackward = `-- name: UpdateCurrPollIndexBackward :one
-UPDATE presentations
-SET currentpollindex = GREATEST(currentpollindex - 1, (
-  SELECT MIN(pollindex)
-  FROM polls
-  WHERE polls.presentationid = $1
-))
-WHERE id = $1
-RETURNING id, currentpollindex
-`
-
-func (q *Queries) UpdateCurrPollIndexBackward(ctx context.Context, presentationid uuid.UUID) (Presentation, error) {
-	row := q.db.QueryRowContext(ctx, updateCurrPollIndexBackward, presentationid)
-	var i Presentation
-	err := row.Scan(&i.ID, &i.Currentpollindex)
-	return i, err
-}
-
-const updateCurrPollIndexForward = `-- name: UpdateCurrPollIndexForward :one
-UPDATE presentations
-SET currentpollindex = LEAST(currentpollindex + 1, (
-  SELECT MAX(pollindex)
-  FROM polls
-  WHERE polls.presentationid = $1
-))
-WHERE id = $1
-RETURNING id, currentpollindex
-`
-
-func (q *Queries) UpdateCurrPollIndexForward(ctx context.Context, presentationid uuid.UUID) (Presentation, error) {
-	row := q.db.QueryRowContext(ctx, updateCurrPollIndexForward, presentationid)
-	var i Presentation
-	err := row.Scan(&i.ID, &i.Currentpollindex)
 	return i, err
 }
