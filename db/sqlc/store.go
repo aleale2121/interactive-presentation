@@ -12,9 +12,9 @@ import (
 // Store defines all functions to execute db queries and transactions
 type Store interface {
 	Querier
-	GetCurrentPoll(context.Context, uuid.UUID) (CurrPollIndexResult, error)
-	UpdateCurrentPollToForwardTx(ctx context.Context, id uuid.UUID) (CurrPollIndexResult, error)
-	UpdateCurrentPollToPreviousTx(ctx context.Context, id uuid.UUID) (CurrPollIndexResult, error) 
+	GetCurrentPoll(context.Context, uuid.UUID) (CurrentPoll, error)
+	UpdateCurrentPollToForwardTx(ctx context.Context, id uuid.UUID) (CurrentPoll, error)
+	UpdateCurrentPollToPreviousTx(ctx context.Context, id uuid.UUID) (CurrentPoll, error) 
 	VoteCurrentPollTx(context.Context, VoteParams) error
 
 }

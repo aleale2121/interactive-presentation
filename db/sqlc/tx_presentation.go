@@ -8,8 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
-func (store *SQLStore) GetCurrentPoll(ctx context.Context, id uuid.UUID) (CurrPollIndexResult, error) {
-	var result CurrPollIndexResult
+func (store *SQLStore) GetCurrentPoll(ctx context.Context, id uuid.UUID) (CurrentPoll, error) {
+	var result CurrentPoll
 	err := store.execTx(ctx, func(q *Queries) error {
 
 		poll, err := q.GetPresentationCurrentPoll(ctx, id)
@@ -18,7 +18,7 @@ func (store *SQLStore) GetCurrentPoll(ctx context.Context, id uuid.UUID) (CurrPo
 		}
 		result.ID = poll.ID.String()
 		result.Question = poll.Question
-		var optionRows []OptionRow
+		var optionRows []PollOption
 		err = json.Unmarshal(poll.Options, &optionRows)
 		if err != nil {
 			return err
@@ -30,8 +30,8 @@ func (store *SQLStore) GetCurrentPoll(ctx context.Context, id uuid.UUID) (CurrPo
 	return result, err
 }
 
-func (store *SQLStore) UpdateCurrentPollToForwardTx(ctx context.Context, id uuid.UUID) (CurrPollIndexResult, error) {
-	var result CurrPollIndexResult
+func (store *SQLStore) UpdateCurrentPollToForwardTx(ctx context.Context, id uuid.UUID) (CurrentPoll, error) {
+	var result CurrentPoll
 	err := store.execTx(ctx, func(q *Queries) error {
 
 		// Update the current poll index for the presentation.
@@ -53,8 +53,8 @@ func (store *SQLStore) UpdateCurrentPollToForwardTx(ctx context.Context, id uuid
 
 }
 
-func (store *SQLStore) UpdateCurrentPollToPreviousTx(ctx context.Context, id uuid.UUID) (CurrPollIndexResult, error) {
-	var result CurrPollIndexResult
+func (store *SQLStore) UpdateCurrentPollToPreviousTx(ctx context.Context, id uuid.UUID) (CurrentPoll, error) {
+	var result CurrentPoll
 	err := store.execTx(ctx, func(q *Queries) error {
 
 		// Update the current poll index for the presentation.

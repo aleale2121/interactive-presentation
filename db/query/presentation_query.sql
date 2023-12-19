@@ -16,7 +16,7 @@ WITH presentations_cte AS (
 INSERT INTO presentations
   (id, currentpollindex)
 VALUES
-  (uuid_generate_v4(), 1)
+  (uuid_generate_v4(), 0)
 RETURNING id
 ),
 data_cte AS
@@ -58,11 +58,6 @@ SELECT
 
 SELECT id
 FROM presentations_cte;
-
--- name: GetPollsCount :one
-SELECT COUNT(*) AS polls_count
-FROM polls
-WHERE presentationid = $1;
 
 -- name: GetPollVotes :many
 SELECT
@@ -145,3 +140,8 @@ SELECT
   ) AS options
 FROM polls p
 INNER JOIN updated_polls_cte upc ON p.presentationid = upc.id AND p.pollindex=upc.currentpollindex;
+
+-- name: GetPollByPID :one
+SELECT *
+FROM polls
+WHERE id = $1 and presentationid = $2;

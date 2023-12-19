@@ -33,7 +33,7 @@ WITH presentations_cte AS (
 INSERT INTO presentations
   (id, currentpollindex)
 VALUES
-  (uuid_generate_v4(), 1)
+  (uuid_generate_v4(), 0)
 RETURNING id
 ),
 data_cte AS
@@ -84,6 +84,30 @@ func (q *Queries) CreatePresentationAndPolls(ctx context.Context, dollar_1 json.
 	return id, err
 }
 
+const getPollByPID = `-- name: GetPollByPID :one
+SELECT id, presentationid, question, pollindex, createdat
+FROM polls
+WHERE id = $1 and presentationid = $2
+`
+
+type GetPollByPIDParams struct {
+	ID             uuid.UUID `db:"id"`
+	Presentationid uuid.UUID `db:"presentationid"`
+}
+
+func (q *Queries) GetPollByPID(ctx context.Context, arg GetPollByPIDParams) (Poll, error) {
+	row := q.db.QueryRowContext(ctx, getPollByPID, arg.ID, arg.Presentationid)
+	var i Poll
+	err := row.Scan(
+		&i.ID,
+		&i.Presentationid,
+		&i.Question,
+		&i.Pollindex,
+		&i.Createdat,
+	)
+	return i, err
+}
+
 const getPollVotes = `-- name: GetPollVotes :many
 SELECT
   votes.optionkey,
@@ -127,19 +151,6 @@ func (q *Queries) GetPollVotes(ctx context.Context, arg GetPollVotesParams) ([]G
 		return nil, err
 	}
 	return items, nil
-}
-
-const getPollsCount = `-- name: GetPollsCount :one
-SELECT COUNT(*) AS polls_count
-FROM polls
-WHERE presentationid = $1
-`
-
-func (q *Queries) GetPollsCount(ctx context.Context, presentationid uuid.UUID) (int64, error) {
-	row := q.db.QueryRowContext(ctx, getPollsCount, presentationid)
-	var polls_count int64
-	err := row.Scan(&polls_count)
-	return polls_count, err
 }
 
 const getPresentation = `-- name: GetPresentation :one
