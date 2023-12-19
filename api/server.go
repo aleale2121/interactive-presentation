@@ -26,17 +26,16 @@ func NewServer(store db.Store) (*Server, error) {
 
 func (server *Server) setupRouter() {
 	router := gin.Default()
-	router.Use(server.ContentTypeChecker())
+    jsonDataGroup := router.Group("/presentations")
+    jsonDataGroup.Use(server.ContentTypeChecker())
 
-	router.POST("/presentations", server.CreatePresentationHandler)
+	jsonDataGroup.POST("", server.CreatePresentationHandler)
+	jsonDataGroup.POST("/:presentation_id/polls/current/votes", server.CreateVoteHandler)
+
 	router.GET("/presentations/:presentation_id", server.GetCurrentPollHandler)
-
 	router.GET("/presentations/:presentation_id/polls/current", server.GetCurrentPollHandler)
 	router.PUT("/presentations/:presentation_id/polls/current", server.UpdateCurrentPollHandler)
-
-	router.POST("/presentations/:presentation_id/polls/current/votes", server.CreateVoteHandler)
 	router.GET("/presentations/:presentation_id/polls/:poll_id/votes", server.GetPollVotesHandler)
-
 	router.GET("/ping", server.HealthCheck)
 
 	// NoRoute and NoMethod handlers
