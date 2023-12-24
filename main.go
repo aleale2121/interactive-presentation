@@ -22,17 +22,17 @@ func main() {
 	}
 	conn, err := sql.Open(config.DBDriver,  config.DBSource)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("conn error: ",err)
 	}
 	defer conn.Close()
 
 
 	m, err := migrate.New(
-		"file://db/migration",
+		config.DBSource,
 		config.DBSource, 
 	)
 	if err != nil {
-		log.Fatal("migration error --> ", err)
+		log.Fatal("migration error: ", err)
 	}
 
 	if err := m.Up(); err != nil {

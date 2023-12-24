@@ -1,5 +1,7 @@
 package db
 
+import "github.com/google/uuid"
+
 type PollOption struct {
 	Optionkey   string `json:"optionkey" db:"optionkey"`
 	Optionvalue string `json:"optionvalue" db:"optionvalue"`
@@ -12,8 +14,8 @@ type CurrentPoll struct {
 }
 
 type VoteParams struct {
-	PresentationID string
-	Pollid         string `db:"pollid"`
+	PresentationID uuid.UUID
+	Pollid         uuid.UUID `db:"pollid"`
 	Optionkey      string `db:"optionkey"`
 	Clientid       string `db:"clientid"`
 }

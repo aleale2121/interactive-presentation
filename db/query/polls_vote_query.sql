@@ -1,8 +1,8 @@
 -- name: CreateVote :exec
 INSERT INTO votes
-  (id, pollid, optionkey, clientid)
+  (pollid, optionkey, clientid)
 VALUES
-  ($1, $2, $3, $4);
+  ($1, $2, $3);
 
 -- name: GetVote :many
 SELECT v.id AS voteID, v.pollid, o.id AS optionid, o.optionkey, o.optionvalue, v.clientid

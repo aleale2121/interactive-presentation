@@ -84,34 +84,10 @@ func (q *Queries) CreatePresentationAndPolls(ctx context.Context, dollar_1 json.
 	return id, err
 }
 
-const getPollByPID = `-- name: GetPollByPID :one
-SELECT id, presentationid, question, pollindex, createdat
-FROM polls
-WHERE id = $1 and presentationid = $2
-`
-
-type GetPollByPIDParams struct {
-	ID             uuid.UUID `db:"id"`
-	Presentationid uuid.UUID `db:"presentationid"`
-}
-
-func (q *Queries) GetPollByPID(ctx context.Context, arg GetPollByPIDParams) (Poll, error) {
-	row := q.db.QueryRowContext(ctx, getPollByPID, arg.ID, arg.Presentationid)
-	var i Poll
-	err := row.Scan(
-		&i.ID,
-		&i.Presentationid,
-		&i.Question,
-		&i.Pollindex,
-		&i.Createdat,
-	)
-	return i, err
-}
-
 const getPollVotes = `-- name: GetPollVotes :many
 SELECT
-  votes.optionkey,
-  votes.clientid
+  votes.optionkey as "key",
+  votes.clientid as "client_id"
 FROM votes
   JOIN polls ON votes.pollid = polls.id
   JOIN presentations ON polls.presentationID = presentations.id
@@ -121,17 +97,17 @@ ORDER BY votes.optionkey
 `
 
 type GetPollVotesParams struct {
-	ID   uuid.UUID `db:"id"`
-	ID_2 uuid.UUID `db:"id_2"`
+	PresentationID uuid.UUID `db:"presentation_id"`
+	PollID         uuid.UUID `db:"poll_id"`
 }
 
 type GetPollVotesRow struct {
-	Optionkey string `db:"optionkey"`
-	Clientid  string `db:"clientid"`
+	Key      string `db:"key"`
+	ClientID string `db:"client_id"`
 }
 
 func (q *Queries) GetPollVotes(ctx context.Context, arg GetPollVotesParams) ([]GetPollVotesRow, error) {
-	rows, err := q.db.QueryContext(ctx, getPollVotes, arg.ID, arg.ID_2)
+	rows, err := q.db.QueryContext(ctx, getPollVotes, arg.PresentationID, arg.PollID)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +115,54 @@ func (q *Queries) GetPollVotes(ctx context.Context, arg GetPollVotesParams) ([]G
 	var items []GetPollVotesRow
 	for rows.Next() {
 		var i GetPollVotesRow
-		if err := rows.Scan(&i.Optionkey, &i.Clientid); err != nil {
+		if err := rows.Scan(&i.Key, &i.ClientID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPollsByPresentationID = `-- name: GetPollsByPresentationID :many
+SELECT
+  p.id AS poll_id,
+  p.question,
+  jsonb_agg(jsonb_build_object(
+        'optionKey', o.optionKey,
+        'optionValue', o.optionValue
+    )) AS options
+FROM
+  polls p
+  JOIN
+  options o ON p.id = o.pollID
+WHERE
+    p.presentationID = $1
+GROUP BY
+    p.id, p.question, p.pollIndex, p.createdAt
+`
+
+type GetPollsByPresentationIDRow struct {
+	PollID   uuid.UUID       `db:"poll_id"`
+	Question string          `db:"question"`
+	Options  json.RawMessage `db:"options"`
+}
+
+func (q *Queries) GetPollsByPresentationID(ctx context.Context, presentationid uuid.UUID) ([]GetPollsByPresentationIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPollsByPresentationID, presentationid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPollsByPresentationIDRow
+	for rows.Next() {
+		var i GetPollsByPresentationIDRow
+		if err := rows.Scan(&i.PollID, &i.Question, &i.Options); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -163,6 +186,45 @@ func (q *Queries) GetPresentation(ctx context.Context, id uuid.UUID) (Presentati
 	row := q.db.QueryRowContext(ctx, getPresentation, id)
 	var i Presentation
 	err := row.Scan(&i.ID, &i.Currentpollindex)
+	return i, err
+}
+
+const getPresentationAndPoll = `-- name: GetPresentationAndPoll :one
+SELECT 
+  pr.id as presentation_id,
+  pr.currentpollindex,
+  pl.id as poll_id,
+  pl.question as question,
+  pl.pollindex
+FROM
+  presentations as pr JOIN polls as pl ON pr.id=pl.presentationid
+WHERE 
+  pr.id=$1 AND pl.id=$2
+`
+
+type GetPresentationAndPollParams struct {
+	PresentationID uuid.UUID `db:"presentation_id"`
+	PollID         uuid.UUID `db:"poll_id"`
+}
+
+type GetPresentationAndPollRow struct {
+	PresentationID   uuid.UUID     `db:"presentation_id"`
+	Currentpollindex sql.NullInt32 `db:"currentpollindex"`
+	PollID           uuid.UUID     `db:"poll_id"`
+	Question         string        `db:"question"`
+	Pollindex        int32         `db:"pollindex"`
+}
+
+func (q *Queries) GetPresentationAndPoll(ctx context.Context, arg GetPresentationAndPollParams) (GetPresentationAndPollRow, error) {
+	row := q.db.QueryRowContext(ctx, getPresentationAndPoll, arg.PresentationID, arg.PollID)
+	var i GetPresentationAndPollRow
+	err := row.Scan(
+		&i.PresentationID,
+		&i.Currentpollindex,
+		&i.PollID,
+		&i.Question,
+		&i.Pollindex,
+	)
 	return i, err
 }
 
@@ -199,14 +261,14 @@ func (q *Queries) GetPresentationCurrentPoll(ctx context.Context, presentationid
 
 const moveBackwardToPreviousPoll = `-- name: MoveBackwardToPreviousPoll :one
 WITH updated_polls_cte AS(
-   UPDATE presentations
+UPDATE presentations
 	SET currentpollindex = GREATEST(currentpollindex - 1, (
 	  SELECT min(pollindex)
-	  FROM polls
-	  WHERE polls.presentationid = $1
+FROM polls
+WHERE polls.presentationid = $1
 	))
 	WHERE id = $1
-   RETURNING id, currentpollindex
+RETURNING id, currentpollindex
 )
 SELECT
   p.id AS id,
@@ -217,11 +279,11 @@ SELECT
       'optionvalue', o.optionvalue
     )) AS options
   FROM options o
-  INNER JOIN polls p ON o.pollid = p.id
+    INNER JOIN polls p ON o.pollid = p.id
   WHERE p.presentationid = upc.id AND p.pollindex=upc.currentpollindex
   ) AS options
 FROM polls p
-INNER JOIN updated_polls_cte upc ON p.presentationid = upc.id AND p.pollindex=upc.currentpollindex
+  INNER JOIN updated_polls_cte upc ON p.presentationid = upc.id AND p.pollindex=upc.currentpollindex
 `
 
 type MoveBackwardToPreviousPollRow struct {
@@ -239,14 +301,14 @@ func (q *Queries) MoveBackwardToPreviousPoll(ctx context.Context, presentationid
 
 const moveForwardToNextPoll = `-- name: MoveForwardToNextPoll :one
 WITH updated_polls_cte AS(
-   UPDATE presentations
-	SET currentpollindex = LEAST(currentpollindex + 1, (
-	  SELECT max(pollindex)
-	  FROM polls
-	  WHERE polls.presentationid = $1
-	))
-	WHERE id = $1
-   RETURNING id, currentpollindex
+UPDATE presentations
+	SET currentpollindex = currentpollindex + 1
+	WHERE presentations.id = $1 AND currentpollindex + 1 <= (
+    SELECT count(*)
+  FROM polls
+  WHERE presentationid = $1
+  )
+RETURNING id, currentpollindex
 )
 SELECT
   p.id AS id,
@@ -257,11 +319,12 @@ SELECT
       'optionvalue', o.optionvalue
     )) AS options
   FROM options o
-  INNER JOIN polls p ON o.pollid = p.id
+    INNER JOIN polls p ON o.pollid = p.id
   WHERE p.presentationid = upc.id AND p.pollindex=upc.currentpollindex
   ) AS options
 FROM polls p
-INNER JOIN updated_polls_cte upc ON p.presentationid = upc.id AND p.pollindex=upc.currentpollindex
+  INNER JOIN updated_polls_cte upc ON p.presentationid = upc.id AND p.pollindex=upc.currentpollindex
+WHERE upc.id IS NOT NULL
 `
 
 type MoveForwardToNextPollRow struct {
@@ -270,8 +333,8 @@ type MoveForwardToNextPollRow struct {
 	Options  json.RawMessage `db:"options"`
 }
 
-func (q *Queries) MoveForwardToNextPoll(ctx context.Context, presentationid uuid.UUID) (MoveForwardToNextPollRow, error) {
-	row := q.db.QueryRowContext(ctx, moveForwardToNextPoll, presentationid)
+func (q *Queries) MoveForwardToNextPoll(ctx context.Context, id uuid.UUID) (MoveForwardToNextPollRow, error) {
+	row := q.db.QueryRowContext(ctx, moveForwardToNextPoll, id)
 	var i MoveForwardToNextPollRow
 	err := row.Scan(&i.ID, &i.Question, &i.Options)
 	return i, err

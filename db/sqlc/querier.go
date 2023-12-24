@@ -16,13 +16,14 @@ type Querier interface {
 	CreatePresentation(ctx context.Context, currentpollindex sql.NullInt32) (uuid.UUID, error)
 	CreatePresentationAndPolls(ctx context.Context, dollar_1 json.RawMessage) (uuid.UUID, error)
 	CreateVote(ctx context.Context, arg CreateVoteParams) error
-	GetPollByPID(ctx context.Context, arg GetPollByPIDParams) (Poll, error)
 	GetPollVotes(ctx context.Context, arg GetPollVotesParams) ([]GetPollVotesRow, error)
+	GetPollsByPresentationID(ctx context.Context, presentationid uuid.UUID) ([]GetPollsByPresentationIDRow, error)
 	GetPresentation(ctx context.Context, id uuid.UUID) (Presentation, error)
+	GetPresentationAndPoll(ctx context.Context, arg GetPresentationAndPollParams) (GetPresentationAndPollRow, error)
 	GetPresentationCurrentPoll(ctx context.Context, presentationid uuid.UUID) (GetPresentationCurrentPollRow, error)
 	GetVote(ctx context.Context, pollid uuid.UUID) ([]GetVoteRow, error)
 	MoveBackwardToPreviousPoll(ctx context.Context, presentationid uuid.UUID) (MoveBackwardToPreviousPollRow, error)
-	MoveForwardToNextPoll(ctx context.Context, presentationid uuid.UUID) (MoveForwardToNextPollRow, error)
+	MoveForwardToNextPoll(ctx context.Context, id uuid.UUID) (MoveForwardToNextPollRow, error)
 }
 
 var _ Querier = (*Queries)(nil)

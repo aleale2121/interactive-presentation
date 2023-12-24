@@ -59,15 +59,27 @@ SELECT
 SELECT id
 FROM presentations_cte;
 
+-- name: GetPresentationAndPoll :one
+SELECT 
+  pr.id as presentation_id,
+  pr.currentpollindex,
+  pl.id as poll_id,
+  pl.question as question,
+  pl.pollindex
+FROM
+  presentations as pr JOIN polls as pl ON pr.id=pl.presentationid
+WHERE 
+  pr.id=sqlc.arg(presentation_id) AND pl.id=sqlc.arg(poll_id);
+
 -- name: GetPollVotes :many
 SELECT
-  votes.optionkey,
-  votes.clientid
+  votes.optionkey as "key",
+  votes.clientid as "client_id"
 FROM votes
   JOIN polls ON votes.pollid = polls.id
   JOIN presentations ON polls.presentationID = presentations.id
-WHERE presentations.id = $1
-  AND polls.id = $2
+WHERE presentations.id = sqlc.arg(presentation_id)
+  AND polls.id = sqlc.arg(poll_id)
 ORDER BY votes.optionkey;
 
 -- name: GetPresentationCurrentPoll :one
@@ -90,14 +102,14 @@ WHERE p.presentationid = $1 and p.pollindex=(SELECT currentpollindex
 
 -- name: MoveForwardToNextPoll :one
 WITH updated_polls_cte AS(
-   UPDATE presentations
-	SET currentpollindex = LEAST(currentpollindex + 1, (
-	  SELECT max(pollindex)
-	  FROM polls
-	  WHERE polls.presentationid = $1
-	))
-	WHERE id = $1
-   RETURNING id, currentpollindex
+UPDATE presentations
+	SET currentpollindex = currentpollindex + 1
+	WHERE presentations.id = $1 AND currentpollindex + 1 <= (
+    SELECT count(*)
+  FROM polls
+  WHERE presentationid = $1
+  )
+RETURNING id, currentpollindex
 )
 SELECT
   p.id AS id,
@@ -108,23 +120,24 @@ SELECT
       'optionvalue', o.optionvalue
     )) AS options
   FROM options o
-  INNER JOIN polls p ON o.pollid = p.id
+    INNER JOIN polls p ON o.pollid = p.id
   WHERE p.presentationid = upc.id AND p.pollindex=upc.currentpollindex
   ) AS options
 FROM polls p
-INNER JOIN updated_polls_cte upc ON p.presentationid = upc.id AND p.pollindex=upc.currentpollindex;
+  INNER JOIN updated_polls_cte upc ON p.presentationid = upc.id AND p.pollindex=upc.currentpollindex
+WHERE upc.id IS NOT NULL;
 
 
 -- name: MoveBackwardToPreviousPoll :one
 WITH updated_polls_cte AS(
-   UPDATE presentations
+UPDATE presentations
 	SET currentpollindex = GREATEST(currentpollindex - 1, (
 	  SELECT min(pollindex)
-	  FROM polls
-	  WHERE polls.presentationid = $1
+FROM polls
+WHERE polls.presentationid = $1
 	))
 	WHERE id = $1
-   RETURNING id, currentpollindex
+RETURNING id, currentpollindex
 )
 SELECT
   p.id AS id,
@@ -135,13 +148,25 @@ SELECT
       'optionvalue', o.optionvalue
     )) AS options
   FROM options o
-  INNER JOIN polls p ON o.pollid = p.id
+    INNER JOIN polls p ON o.pollid = p.id
   WHERE p.presentationid = upc.id AND p.pollindex=upc.currentpollindex
   ) AS options
 FROM polls p
-INNER JOIN updated_polls_cte upc ON p.presentationid = upc.id AND p.pollindex=upc.currentpollindex;
+  INNER JOIN updated_polls_cte upc ON p.presentationid = upc.id AND p.pollindex=upc.currentpollindex;
 
--- name: GetPollByPID :one
-SELECT *
-FROM polls
-WHERE id = $1 and presentationid = $2;
+-- name: GetPollsByPresentationID :many
+SELECT
+  p.id AS poll_id,
+  p.question,
+  jsonb_agg(jsonb_build_object(
+        'optionKey', o.optionKey,
+        'optionValue', o.optionValue
+    )) AS options
+FROM
+  polls p
+  JOIN
+  options o ON p.id = o.pollID
+WHERE
+    p.presentationID = $1
+GROUP BY
+    p.id, p.question, p.pollIndex, p.createdAt;

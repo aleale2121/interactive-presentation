@@ -13,25 +13,19 @@ import (
 
 const createVote = `-- name: CreateVote :exec
 INSERT INTO votes
-  (id, pollid, optionkey, clientid)
+  (pollid, optionkey, clientid)
 VALUES
-  ($1, $2, $3, $4)
+  ($1, $2, $3)
 `
 
 type CreateVoteParams struct {
-	ID        uuid.UUID `db:"id"`
 	Pollid    uuid.UUID `db:"pollid"`
 	Optionkey string    `db:"optionkey"`
 	Clientid  string    `db:"clientid"`
 }
 
 func (q *Queries) CreateVote(ctx context.Context, arg CreateVoteParams) error {
-	_, err := q.db.ExecContext(ctx, createVote,
-		arg.ID,
-		arg.Pollid,
-		arg.Optionkey,
-		arg.Clientid,
-	)
+	_, err := q.db.ExecContext(ctx, createVote, arg.Pollid, arg.Optionkey, arg.Clientid)
 	return err
 }
 

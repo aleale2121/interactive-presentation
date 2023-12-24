@@ -32,7 +32,7 @@ func (server *Server) setupRouter() {
 	jsonDataGroup.POST("", server.CreatePresentationHandler)
 	jsonDataGroup.POST("/:presentation_id/polls/current/votes", server.CreateVoteHandler)
 
-	router.GET("/presentations/:presentation_id", server.GetCurrentPollHandler)
+	router.GET("/presentations/:presentation_id", server.GetPresentationHandler)
 	router.GET("/presentations/:presentation_id/polls/current", server.GetCurrentPollHandler)
 	router.PUT("/presentations/:presentation_id/polls/current", server.UpdateCurrentPollHandler)
 	router.GET("/presentations/:presentation_id/polls/:poll_id/votes", server.GetPollVotesHandler)
