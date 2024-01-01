@@ -1,92 +1,76 @@
 package db
 
-// import (
-// 	"context"
-// 	"testing"
+import (
+	"context"
+	"encoding/json"
+	"testing"
 
-// 	"github.com/aleale2121/interactive-presentation/util"
-// 	"github.com/stretchr/testify/require"
-// 	"github.com/google/uuid"
+	"github.com/aleale2121/interactive-presentation/models"
+	"github.com/aleale2121/interactive-presentation/util"
+	"github.com/stretchr/testify/require"
+)
 
-// )
+func createRandomVote(t *testing.T) models.Vote {
+	createdPresenationID := createRandomPresentationWithPolls(t, 2)
 
-// func createRandomVote(t *testing.T) string {
-// 	key := util.RandomOptionKey()
-// 	presentation := createRandomPresentation(t)
-// 	poll := createPresentationPoll(t, presentation)
+	polls, err := testQueries.GetPollsByPresentationID(context.Background(), createdPresenationID)
+	require.NoError(t, err)
+	require.NotEmpty(t, polls)
+	require.Len(t, polls, 2)
+	var options []Option
 
-// 	arg := CreateOptionParams{
-// 		Pollid:      poll.ID,
-// 		Optionkey:   key,
-// 		Optionvalue: util.RandomOptionValue(),
-// 	}
+	err = json.Unmarshal(polls[0].Options, &options)
+	require.NoError(t, err)
 
-// 	err := testQueries.CreateOption(context.Background(), arg)
-// 	require.NoError(t, err)
+	// create vote with existing keys
+	for i := 0; i < len(options); i++ {
+		err = testQueries.CreateVote(context.Background(), CreateVoteParams{
+			Pollid:    polls[0].PollID,
+			Optionkey: options[i].Optionkey,
+			Clientid:  util.RandomUUID().String(),
+		})
+		require.NoError(t, err)
+	}
 
-// 	err = testQueries.CreateVote(context.Background(), CreateVoteParams{
-// 		ID:        util.RandomUUID(),
-// 		Pollid:    poll.ID,
-// 		Optionkey: key,
-// 		Clientid:  util.RandomUUID().String(),
-// 	})
+	// create vote with non-existing option key
+	err = testQueries.CreateVote(context.Background(), CreateVoteParams{
+		Pollid:    polls[0].PollID,
+		Optionkey: util.RandomUUID().String(),
+		Clientid:  util.RandomUUID().String(),
+	})
+	require.Error(t, err)
 
-// 	require.NoError(t, err)
-// 	return key
-// }
+	// create vote with non-existing poll id
+	err = testQueries.CreateVote(context.Background(), CreateVoteParams{
+		Pollid:    util.RandomUUID(),
+		Optionkey: options[0].Optionkey,
+		Clientid:  util.RandomUUID().String(),
+	})
+	require.Error(t, err)
 
-// func createRandomPollVote(t *testing.T, pollID uuid.UUID, optionKey string) string {
+	return models.Vote{
+		PollID:         polls[0].PollID,
+		PresentationID: createdPresenationID,
+		VoteCount:      len(options),
+	}
+}
 
-// 	err := testQueries.CreateVote(context.Background(), CreateVoteParams{
-// 		ID:        util.RandomUUID(),
-// 		Pollid:    pollID,
-// 		Optionkey: optionKey,
-// 		Clientid:  util.RandomUUID().String(),
-// 	})
+func TestCreateVote(t *testing.T) {
+	createRandomVote(t)
+}
 
-// 	require.NoError(t, err)
-// 	return optionKey
-// }
+func TestGetPollVotes(t *testing.T) {
+	vote := createRandomVote(t)
 
-// func TestCreateVote(t *testing.T) {
-// 	createRandomVote(t)
-// }
+	votes, err := testQueries.GetPollVotes(context.Background(), GetPollVotesParams{
+		PresentationID: vote.PresentationID,
+		PollID:         vote.PollID,
+	})
 
-// func TestGetVote(t *testing.T) {
-// 	pres := createRandomPresentation(t)
-// 	poll := createPresentationPoll(t, pres)
-// 	for i := 0; i < 10; i++ {
-// 		optionKey := createRandomPollOption(t, poll)
-// 		createRandomPollVote(t, poll.ID, optionKey)
-// 	}
-
-// 	votes, err := testQueries.GetVote(context.Background(), poll.ID)
-
-// 	require.NoError(t, err)
-// 	require.NotEmpty(t, votes)
-// 	require.Len(t, votes, 10)
-// 	for _, vote := range votes {
-// 		require.NotEmpty(t, vote)
-// 	}
-// }
-
-// func TestGetPollVotes(t *testing.T) {
-// 	presID := createRandomPresentation(t)
-// 	poll := createPresentationPoll(t, presID)
-// 	for i := 0; i < 10; i++ {
-// 		optionKey := createRandomPollOption(t, poll)
-// 		createRandomPollVote(t, poll.ID, optionKey)
-// 	}
-
-// 	votes, err := testQueries.GetPollVotes(context.Background(), GetPollVotesParams{
-// 		ID:   presID,
-// 		ID_2: poll.ID,
-// 	})
-
-// 	require.NoError(t, err)
-// 	require.NotEmpty(t, votes)
-// 	require.Len(t, votes, 10)
-// 	for _, vote := range votes {
-// 		require.NotEmpty(t, vote)
-// 	}
-// }
+	require.NoError(t, err)
+	require.NotEmpty(t, votes)
+	require.Len(t, votes, vote.VoteCount)
+	for _, vote := range votes {
+		require.NotEmpty(t, vote)
+	}
+}

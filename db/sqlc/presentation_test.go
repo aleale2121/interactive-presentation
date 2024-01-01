@@ -2,32 +2,14 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
-func createRandomPresentation(t *testing.T) uuid.UUID {
-	arg := sql.NullInt32{
-		Int32: 0,
-		Valid: true,
-	}
-
-	presentation, err := testQueries.CreatePresentation(context.Background(), arg)
-	require.NoError(t, err)
-	require.NotEmpty(t, presentation)
-
-	return presentation
-}
-
-func TestCreatePresentation(t *testing.T) {
-	createRandomPresentation(t)
-}
-
-func createRandomPresentationWithPolls(t *testing.T) uuid.UUID {
-	presentationID, err := testQueries.CreatePresentationAndPolls(context.Background(), []byte(presenatationData8))
+func createRandomPresentationWithPolls(t *testing.T, len int) uuid.UUID {
+	presentationID, err := testQueries.CreatePresentationAndPolls(context.Background(), []byte(presentationData[len]))
 	require.NoError(t, err)
 	require.NotEmpty(t, presentationID)
 
@@ -35,14 +17,129 @@ func createRandomPresentationWithPolls(t *testing.T) uuid.UUID {
 }
 
 func TestCreatePresentationAndPolls(t *testing.T) {
-	createRandomPresentationWithPolls(t)
+	createRandomPresentationWithPolls(t, 2)
 }
 
 func TestGetPresentation(t *testing.T) {
-	createdPresenationID := createRandomPresentation(t)
+	createdPresenationID := createRandomPresentationWithPolls(t, 2)
 	retrievedPresentation, err := testQueries.GetPresentation(context.Background(), createdPresenationID)
 	require.NoError(t, err)
 	require.NotEmpty(t, retrievedPresentation)
 
 	require.Equal(t, createdPresenationID, retrievedPresentation.ID)
+}
+
+func TestGetPresentationCurrentPoll(t *testing.T) {
+	createdPresenationID := createRandomPresentationWithPolls(t, 2)
+	poll, err := testQueries.GetPresentationCurrentPoll(context.Background(), createdPresenationID)
+	require.Error(t, err)
+	require.Empty(t, poll)
+
+	nextPoll, err := testQueries.MoveForwardToNextPoll(context.Background(), createdPresenationID)
+	require.NoError(t, err)
+	require.NotEmpty(t, nextPoll)
+
+	poll, err = testQueries.GetPresentationCurrentPoll(context.Background(), createdPresenationID)
+	require.NoError(t, err)
+	require.NotEmpty(t, poll)
+	require.Equal(t, poll.ID, nextPoll.ID)
+}
+
+func TestGetPollsByPresentationID(t *testing.T) {
+	createdPresenationID := createRandomPresentationWithPolls(t, 8)
+	polls, err := testQueries.GetPollsByPresentationID(context.Background(), createdPresenationID)
+	require.NoError(t, err)
+	require.NotEmpty(t, polls)
+	require.Len(t, polls, 8)
+}
+
+func TestGetPresentationAndPoll(t *testing.T) {
+	createdPresenationID := createRandomPresentationWithPolls(t, 8)
+	polls, err := testQueries.GetPollsByPresentationID(context.Background(), createdPresenationID)
+	require.NoError(t, err)
+	require.NotEmpty(t, polls)
+	require.Len(t, polls, 8)
+
+	result, err := testQueries.GetPresentationAndPoll(context.Background(), GetPresentationAndPollParams{
+		PresentationID: createdPresenationID,
+		PollID:         polls[0].PollID,
+	})
+	require.NoError(t, err)
+	require.Equal(t, createdPresenationID, result.PresentationID)
+	require.Equal(t, int32(0), result.Currentpollindex.Int32)
+	require.Equal(t, polls[0].PollID, result.PollID)
+
+}
+
+func TestMoveForwardToNextPoll(t *testing.T) {
+	createdPresenationID := createRandomPresentationWithPolls(t, 2)
+	polls, err := testQueries.GetPollsByPresentationID(context.Background(), createdPresenationID)
+	require.NoError(t, err)
+	require.NotEmpty(t, polls)
+	require.Len(t, polls, 2)
+
+	poll, err := testQueries.GetPresentationCurrentPoll(context.Background(), createdPresenationID)
+	require.Error(t, err)
+	require.Empty(t, poll)
+
+	for i := 0; i < 2; i++ {
+		nextPoll, err := testQueries.MoveForwardToNextPoll(context.Background(), createdPresenationID)
+		require.NoError(t, err)
+		require.NotEmpty(t, nextPoll)
+		require.Equal(t, polls[i].PollID.String(), nextPoll.ID.String())
+
+		currPoll, err := testQueries.GetPresentationCurrentPoll(context.Background(), createdPresenationID)
+		require.NoError(t, err)
+		require.NotEmpty(t, currPoll)
+		require.Equal(t, polls[i].PollID.String(), currPoll.ID.String())
+		require.Equal(t, nextPoll.ID.String(), currPoll.ID.String())
+	}
+
+	nextPoll, err := testQueries.MoveForwardToNextPoll(context.Background(), createdPresenationID)
+	require.Error(t, err)
+	require.Empty(t, nextPoll)
+
+	currPoll, err := testQueries.GetPresentationCurrentPoll(context.Background(), createdPresenationID)
+	require.NoError(t, err)
+	require.NotEmpty(t, currPoll)
+	require.Equal(t, polls[1].PollID.String(), currPoll.ID.String())
+
+}
+
+func TestMoveBackwardToPreviousPoll(t *testing.T) {
+	createdPresenationID := createRandomPresentationWithPolls(t, 2)
+	polls, err := testQueries.GetPollsByPresentationID(context.Background(), createdPresenationID)
+	require.NoError(t, err)
+	require.NotEmpty(t, polls)
+	require.Len(t, polls, 2)
+
+	// currently no poll is displayed
+	poll, err := testQueries.GetPresentationCurrentPoll(context.Background(), createdPresenationID)
+	require.Error(t, err)
+	require.Empty(t, poll)
+
+	// move forward twice to the second index
+	for i := 0; i < 2; i++ {
+		nextPoll, err := testQueries.MoveForwardToNextPoll(context.Background(), createdPresenationID)
+		require.NoError(t, err)
+		require.NotEmpty(t, nextPoll)
+		require.Equal(t, polls[i].PollID.String(), nextPoll.ID.String())
+	}
+
+	// move backward to the first index
+	prevPoll, err := testQueries.MoveBackwardToPreviousPoll(context.Background(), createdPresenationID)
+	require.NoError(t, err)
+	require.NotEmpty(t, prevPoll)
+	require.Equal(t, polls[0].PollID.String(), prevPoll.ID.String())
+
+	//check the current displayed poll
+	currPoll, err := testQueries.GetPresentationCurrentPoll(context.Background(), createdPresenationID)
+	require.NoError(t, err)
+	require.NotEmpty(t, currPoll)
+	require.Equal(t, prevPoll.ID.String(), currPoll.ID.String())
+
+	// move backward to the zero index  no poll is display
+	prevPoll, err = testQueries.MoveBackwardToPreviousPoll(context.Background(), createdPresenationID)
+	require.Error(t, err)
+	require.Empty(t, prevPoll)
 }

@@ -1,14 +1,12 @@
 package db
 
 import (
-	"context"
 	"database/sql"
 	"log"
 	"os"
 	"testing"
 
 	"github.com/aleale2121/interactive-presentation/util"
-	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 )
 
@@ -110,36 +108,28 @@ const (
 
 var testQueries *Queries
 var testDB *sql.DB
-var presentationID2 uuid.UUID
-var presentationID8 uuid.UUID
+
+var presentationData map[int]string
 
 func TestMain(m *testing.M) {
 	config, err := util.LoadConfig("../..")
 	if err != nil {
 		log.Fatal("cannot load config:", err)
 	}
+
 	testDB, err = sql.Open(config.DBDriver, config.DBSource)
 	if err != nil {
 		log.Fatal("cannot connect to db:", err)
 	}
 
 	testQueries = New(testDB)
-
 	if err != nil {
 		log.Fatal("cannot marshal:", err)
 		return
 	}
-
-
-	presentationID2, err = testQueries.CreatePresentationAndPolls(context.Background(), []byte(presenatationData2))
-	if err != nil {
-		log.Fatal("cannot create presentation:", err)
-		return
-	}
-	presentationID8, err = testQueries.CreatePresentationAndPolls(context.Background(), []byte(presenatationData8))
-	if err != nil {
-		log.Fatal("cannot create presentation:", err)
-		return
+	presentationData = map[int]string{
+		2: presenatationData2,
+		8: presenatationData8,
 	}
 	os.Exit(m.Run())
 }

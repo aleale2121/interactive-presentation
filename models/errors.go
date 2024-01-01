@@ -3,6 +3,6 @@ package models
 import "errors"
 
 var (
-	ErrNotFound = errors.New("Not Found")
-	ErrConflict = errors.New("Conflict")
+	ErrNotFound = errors.New("not found")
+	ErrConflict = errors.New("conflict")
 )

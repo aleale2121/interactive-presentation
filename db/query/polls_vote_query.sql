@@ -4,8 +4,14 @@ INSERT INTO votes
 VALUES
   ($1, $2, $3);
 
--- name: GetVote :many
-SELECT v.id AS voteID, v.pollid, o.id AS optionid, o.optionkey, o.optionvalue, v.clientid
-FROM votes AS v
-  JOIN options AS o ON v.optionkey = o.optionkey
-WHERE v.pollid = $1;
+-- name: GetPollVotes :many
+SELECT
+  votes.optionkey as "key",
+  votes.clientid as "client_id"
+FROM votes
+  JOIN polls ON votes.pollid = polls.id
+  JOIN presentations ON polls.presentationID = presentations.id
+WHERE presentations.id = sqlc.arg(presentation_id)
+  AND polls.id = sqlc.arg(poll_id)
+ORDER BY votes.optionkey;
+

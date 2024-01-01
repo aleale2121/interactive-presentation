@@ -34,7 +34,6 @@ CREATE TABLE votes (
     pollID UUID NOT NULL,
     optionKey TEXT NOT NULL,
     clientID TEXT NOT NULL,
-    FOREIGN KEY (pollID) REFERENCES polls(id),
     FOREIGN KEY (pollID, optionKey) REFERENCES options(pollID, optionKey),
     UNIQUE(pollID, clientID)
 );

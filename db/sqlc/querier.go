@@ -6,14 +6,12 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 
 	"github.com/google/uuid"
 )
 
 type Querier interface {
-	CreatePresentation(ctx context.Context, currentpollindex sql.NullInt32) (uuid.UUID, error)
 	CreatePresentationAndPolls(ctx context.Context, dollar_1 json.RawMessage) (uuid.UUID, error)
 	CreateVote(ctx context.Context, arg CreateVoteParams) error
 	GetPollVotes(ctx context.Context, arg GetPollVotesParams) ([]GetPollVotesRow, error)
@@ -21,8 +19,7 @@ type Querier interface {
 	GetPresentation(ctx context.Context, id uuid.UUID) (Presentation, error)
 	GetPresentationAndPoll(ctx context.Context, arg GetPresentationAndPollParams) (GetPresentationAndPollRow, error)
 	GetPresentationCurrentPoll(ctx context.Context, presentationid uuid.UUID) (GetPresentationCurrentPollRow, error)
-	GetVote(ctx context.Context, pollid uuid.UUID) ([]GetVoteRow, error)
-	MoveBackwardToPreviousPoll(ctx context.Context, presentationid uuid.UUID) (MoveBackwardToPreviousPollRow, error)
+	MoveBackwardToPreviousPoll(ctx context.Context, id uuid.UUID) (MoveBackwardToPreviousPollRow, error)
 	MoveForwardToNextPoll(ctx context.Context, id uuid.UUID) (MoveForwardToNextPollRow, error)
 }
 

@@ -29,39 +29,38 @@ func (q *Queries) CreateVote(ctx context.Context, arg CreateVoteParams) error {
 	return err
 }
 
-const getVote = `-- name: GetVote :many
-SELECT v.id AS voteID, v.pollid, o.id AS optionid, o.optionkey, o.optionvalue, v.clientid
-FROM votes AS v
-  JOIN options AS o ON v.optionkey = o.optionkey
-WHERE v.pollid = $1
+const getPollVotes = `-- name: GetPollVotes :many
+SELECT
+  votes.optionkey as "key",
+  votes.clientid as "client_id"
+FROM votes
+  JOIN polls ON votes.pollid = polls.id
+  JOIN presentations ON polls.presentationID = presentations.id
+WHERE presentations.id = $1
+  AND polls.id = $2
+ORDER BY votes.optionkey
 `
 
-type GetVoteRow struct {
-	Voteid      uuid.UUID `db:"voteid"`
-	Pollid      uuid.UUID `db:"pollid"`
-	Optionid    uuid.UUID `db:"optionid"`
-	Optionkey   string    `db:"optionkey"`
-	Optionvalue string    `db:"optionvalue"`
-	Clientid    string    `db:"clientid"`
+type GetPollVotesParams struct {
+	PresentationID uuid.UUID `db:"presentation_id"`
+	PollID         uuid.UUID `db:"poll_id"`
 }
 
-func (q *Queries) GetVote(ctx context.Context, pollid uuid.UUID) ([]GetVoteRow, error) {
-	rows, err := q.db.QueryContext(ctx, getVote, pollid)
+type GetPollVotesRow struct {
+	Key      string `db:"key"`
+	ClientID string `db:"client_id"`
+}
+
+func (q *Queries) GetPollVotes(ctx context.Context, arg GetPollVotesParams) ([]GetPollVotesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPollVotes, arg.PresentationID, arg.PollID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetVoteRow
+	var items []GetPollVotesRow
 	for rows.Next() {
-		var i GetVoteRow
-		if err := rows.Scan(
-			&i.Voteid,
-			&i.Pollid,
-			&i.Optionid,
-			&i.Optionkey,
-			&i.Optionvalue,
-			&i.Clientid,
-		); err != nil {
+		var i GetPollVotesRow
+		if err := rows.Scan(&i.Key, &i.ClientID); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

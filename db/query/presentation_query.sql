@@ -1,10 +1,3 @@
--- name: CreatePresentation :one
-INSERT INTO presentations
-  (currentpollindex)
-VALUES
-  ($1)
-RETURNING id;
-
 -- name: GetPresentation :one
 SELECT *
 FROM presentations
@@ -71,16 +64,6 @@ FROM
 WHERE 
   pr.id=sqlc.arg(presentation_id) AND pl.id=sqlc.arg(poll_id);
 
--- name: GetPollVotes :many
-SELECT
-  votes.optionkey as "key",
-  votes.clientid as "client_id"
-FROM votes
-  JOIN polls ON votes.pollid = polls.id
-  JOIN presentations ON polls.presentationID = presentations.id
-WHERE presentations.id = sqlc.arg(presentation_id)
-  AND polls.id = sqlc.arg(poll_id)
-ORDER BY votes.optionkey;
 
 -- name: GetPresentationCurrentPoll :one
 SELECT
@@ -131,12 +114,8 @@ WHERE upc.id IS NOT NULL;
 -- name: MoveBackwardToPreviousPoll :one
 WITH updated_polls_cte AS(
 UPDATE presentations
-	SET currentpollindex = GREATEST(currentpollindex - 1, (
-	  SELECT min(pollindex)
-FROM polls
-WHERE polls.presentationid = $1
-	))
-	WHERE id = $1
+	SET currentpollindex = currentpollindex - 1
+	WHERE presentations.id = $1 AND currentpollindex - 1 >=0
 RETURNING id, currentpollindex
 )
 SELECT
@@ -152,7 +131,8 @@ SELECT
   WHERE p.presentationid = upc.id AND p.pollindex=upc.currentpollindex
   ) AS options
 FROM polls p
-  INNER JOIN updated_polls_cte upc ON p.presentationid = upc.id AND p.pollindex=upc.currentpollindex;
+  INNER JOIN updated_polls_cte upc ON p.presentationid = upc.id AND p.pollindex=upc.currentpollindex
+WHERE upc.id IS NOT NULL;
 
 -- name: GetPollsByPresentationID :many
 SELECT
@@ -169,4 +149,6 @@ FROM
 WHERE
     p.presentationID = $1
 GROUP BY
-    p.id, p.question, p.pollIndex, p.createdAt;
+    p.id, p.question, p.pollindex, p.createdAt
+ORDER BY
+    p.pollindex;
