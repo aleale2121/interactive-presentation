@@ -35,7 +35,7 @@ func TestGetPresentationCurrentPoll(t *testing.T) {
 	require.Error(t, err)
 	require.Empty(t, poll)
 
-	nextPoll, err := testQueries.MoveForwardToNextPoll(context.Background(), createdPresenationID)
+	nextPoll, err := testQueries.GetNextPoll(context.Background(), createdPresenationID)
 	require.NoError(t, err)
 	require.NotEmpty(t, nextPoll)
 
@@ -45,9 +45,9 @@ func TestGetPresentationCurrentPoll(t *testing.T) {
 	require.Equal(t, poll.ID, nextPoll.ID)
 }
 
-func TestGetPollsByPresentationID(t *testing.T) {
+func TestListPolls(t *testing.T) {
 	createdPresenationID := createRandomPresentationWithPolls(t, 8)
-	polls, err := testQueries.GetPollsByPresentationID(context.Background(), createdPresenationID)
+	polls, err := testQueries.ListPolls(context.Background(), createdPresenationID)
 	require.NoError(t, err)
 	require.NotEmpty(t, polls)
 	require.Len(t, polls, 8)
@@ -55,25 +55,25 @@ func TestGetPollsByPresentationID(t *testing.T) {
 
 func TestGetPresentationAndPoll(t *testing.T) {
 	createdPresenationID := createRandomPresentationWithPolls(t, 8)
-	polls, err := testQueries.GetPollsByPresentationID(context.Background(), createdPresenationID)
+	polls, err := testQueries.ListPolls(context.Background(), createdPresenationID)
 	require.NoError(t, err)
 	require.NotEmpty(t, polls)
 	require.Len(t, polls, 8)
 
 	result, err := testQueries.GetPresentationAndPoll(context.Background(), GetPresentationAndPollParams{
 		PresentationID: createdPresenationID,
-		PollID:         polls[0].PollID,
+		PollID:         polls[0].ID,
 	})
 	require.NoError(t, err)
 	require.Equal(t, createdPresenationID, result.PresentationID)
 	require.Equal(t, int32(0), result.Currentpollindex.Int32)
-	require.Equal(t, polls[0].PollID, result.PollID)
+	require.Equal(t, polls[0].ID, result.PollID)
 
 }
 
-func TestMoveForwardToNextPoll(t *testing.T) {
+func TestGetNextPoll(t *testing.T) {
 	createdPresenationID := createRandomPresentationWithPolls(t, 2)
-	polls, err := testQueries.GetPollsByPresentationID(context.Background(), createdPresenationID)
+	polls, err := testQueries.ListPolls(context.Background(), createdPresenationID)
 	require.NoError(t, err)
 	require.NotEmpty(t, polls)
 	require.Len(t, polls, 2)
@@ -83,32 +83,32 @@ func TestMoveForwardToNextPoll(t *testing.T) {
 	require.Empty(t, poll)
 
 	for i := 0; i < 2; i++ {
-		nextPoll, err := testQueries.MoveForwardToNextPoll(context.Background(), createdPresenationID)
+		nextPoll, err := testQueries.GetNextPoll(context.Background(), createdPresenationID)
 		require.NoError(t, err)
 		require.NotEmpty(t, nextPoll)
-		require.Equal(t, polls[i].PollID.String(), nextPoll.ID.String())
+		require.Equal(t, polls[i].ID.String(), nextPoll.ID.String())
 
 		currPoll, err := testQueries.GetPresentationCurrentPoll(context.Background(), createdPresenationID)
 		require.NoError(t, err)
 		require.NotEmpty(t, currPoll)
-		require.Equal(t, polls[i].PollID.String(), currPoll.ID.String())
+		require.Equal(t, polls[i].ID.String(), currPoll.ID.String())
 		require.Equal(t, nextPoll.ID.String(), currPoll.ID.String())
 	}
 
-	nextPoll, err := testQueries.MoveForwardToNextPoll(context.Background(), createdPresenationID)
+	nextPoll, err := testQueries.GetNextPoll(context.Background(), createdPresenationID)
 	require.Error(t, err)
 	require.Empty(t, nextPoll)
 
 	currPoll, err := testQueries.GetPresentationCurrentPoll(context.Background(), createdPresenationID)
 	require.NoError(t, err)
 	require.NotEmpty(t, currPoll)
-	require.Equal(t, polls[1].PollID.String(), currPoll.ID.String())
+	require.Equal(t, polls[1].ID.String(), currPoll.ID.String())
 
 }
 
-func TestMoveBackwardToPreviousPoll(t *testing.T) {
+func TestGetPreviousPoll(t *testing.T) {
 	createdPresenationID := createRandomPresentationWithPolls(t, 2)
-	polls, err := testQueries.GetPollsByPresentationID(context.Background(), createdPresenationID)
+	polls, err := testQueries.ListPolls(context.Background(), createdPresenationID)
 	require.NoError(t, err)
 	require.NotEmpty(t, polls)
 	require.Len(t, polls, 2)
@@ -120,17 +120,17 @@ func TestMoveBackwardToPreviousPoll(t *testing.T) {
 
 	// move forward twice to the second index
 	for i := 0; i < 2; i++ {
-		nextPoll, err := testQueries.MoveForwardToNextPoll(context.Background(), createdPresenationID)
+		nextPoll, err := testQueries.GetNextPoll(context.Background(), createdPresenationID)
 		require.NoError(t, err)
 		require.NotEmpty(t, nextPoll)
-		require.Equal(t, polls[i].PollID.String(), nextPoll.ID.String())
+		require.Equal(t, polls[i].ID.String(), nextPoll.ID.String())
 	}
 
 	// move backward to the first index
-	prevPoll, err := testQueries.MoveBackwardToPreviousPoll(context.Background(), createdPresenationID)
+	prevPoll, err := testQueries.GetPreviousPoll(context.Background(), createdPresenationID)
 	require.NoError(t, err)
 	require.NotEmpty(t, prevPoll)
-	require.Equal(t, polls[0].PollID.String(), prevPoll.ID.String())
+	require.Equal(t, polls[0].ID.String(), prevPoll.ID.String())
 
 	//check the current displayed poll
 	currPoll, err := testQueries.GetPresentationCurrentPoll(context.Background(), createdPresenationID)
@@ -139,7 +139,7 @@ func TestMoveBackwardToPreviousPoll(t *testing.T) {
 	require.Equal(t, prevPoll.ID.String(), currPoll.ID.String())
 
 	// move backward to the zero index  no poll is display
-	prevPoll, err = testQueries.MoveBackwardToPreviousPoll(context.Background(), createdPresenationID)
+	prevPoll, err = testQueries.GetPreviousPoll(context.Background(), createdPresenationID)
 	require.Error(t, err)
 	require.Empty(t, prevPoll)
 }

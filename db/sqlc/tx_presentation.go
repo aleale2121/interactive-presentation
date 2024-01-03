@@ -35,7 +35,7 @@ func (store *SQLStore) UpdateCurrentPollToForwardTx(ctx context.Context, id uuid
 	err := store.execTx(ctx, func(q *Queries) error {
 
 		// Update the current poll index for the presentation.
-		nextPoll, err := q.MoveForwardToNextPoll(ctx, id)
+		nextPoll, err := q.GetNextPoll(ctx, id)
 		if err != nil {
 			return err
 		}
@@ -58,7 +58,7 @@ func (store *SQLStore) UpdateCurrentPollToPreviousTx(ctx context.Context, id uui
 	err := store.execTx(ctx, func(q *Queries) error {
 
 		// Update the current poll index for the presentation.
-		nextPoll, err := q.MoveBackwardToPreviousPoll(ctx, id)
+		nextPoll, err := q.GetPreviousPoll(ctx, id)
 		if err != nil {
 			return err
 		}

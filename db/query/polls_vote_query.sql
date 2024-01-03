@@ -4,7 +4,7 @@ INSERT INTO votes
 VALUES
   ($1, $2, $3);
 
--- name: GetPollVotes :many
+-- name: GetVotes :many
 SELECT
   votes.optionkey as "key",
   votes.clientid as "client_id"

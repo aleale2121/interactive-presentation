@@ -29,7 +29,7 @@ func (q *Queries) CreateVote(ctx context.Context, arg CreateVoteParams) error {
 	return err
 }
 
-const getPollVotes = `-- name: GetPollVotes :many
+const getVotes = `-- name: GetVotes :many
 SELECT
   votes.optionkey as "key",
   votes.clientid as "client_id"
@@ -41,25 +41,25 @@ WHERE presentations.id = $1
 ORDER BY votes.optionkey
 `
 
-type GetPollVotesParams struct {
+type GetVotesParams struct {
 	PresentationID uuid.UUID `db:"presentation_id"`
 	PollID         uuid.UUID `db:"poll_id"`
 }
 
-type GetPollVotesRow struct {
+type GetVotesRow struct {
 	Key      string `db:"key"`
 	ClientID string `db:"client_id"`
 }
 
-func (q *Queries) GetPollVotes(ctx context.Context, arg GetPollVotesParams) ([]GetPollVotesRow, error) {
-	rows, err := q.db.QueryContext(ctx, getPollVotes, arg.PresentationID, arg.PollID)
+func (q *Queries) GetVotes(ctx context.Context, arg GetVotesParams) ([]GetVotesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getVotes, arg.PresentationID, arg.PollID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetPollVotesRow
+	var items []GetVotesRow
 	for rows.Next() {
-		var i GetPollVotesRow
+		var i GetVotesRow
 		if err := rows.Scan(&i.Key, &i.ClientID); err != nil {
 			return nil, err
 		}

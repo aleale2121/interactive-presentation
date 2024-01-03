@@ -83,7 +83,7 @@ WHERE p.presentationid = $1 and p.pollindex=(SELECT currentpollindex
   WHERE id=$1);
 
 
--- name: MoveForwardToNextPoll :one
+-- name: GetNextPoll :one
 WITH updated_polls_cte AS(
 UPDATE presentations
 	SET currentpollindex = currentpollindex + 1
@@ -111,7 +111,7 @@ FROM polls p
 WHERE upc.id IS NOT NULL;
 
 
--- name: MoveBackwardToPreviousPoll :one
+-- name: GetPreviousPoll :one
 WITH updated_polls_cte AS(
 UPDATE presentations
 	SET currentpollindex = currentpollindex - 1
@@ -134,9 +134,9 @@ FROM polls p
   INNER JOIN updated_polls_cte upc ON p.presentationid = upc.id AND p.pollindex=upc.currentpollindex
 WHERE upc.id IS NOT NULL;
 
--- name: GetPollsByPresentationID :many
+-- name: ListPolls :many
 SELECT
-  p.id AS poll_id,
+  p.id AS id,
   p.question,
   jsonb_agg(jsonb_build_object(
         'optionKey', o.optionKey,

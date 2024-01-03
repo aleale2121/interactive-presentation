@@ -8,8 +8,8 @@ type Poll struct {
 }
 
 type Option struct {
-	Key   string `json:"key" binding:"required"`
-	Value string `json:"value" binding:"required"`
+	Key   string `json:"key" db:"optionKey" binding:"required"`
+	Value string `json:"value" db:"optionValue" binding:"required"`
 }
 
 type Vote struct {

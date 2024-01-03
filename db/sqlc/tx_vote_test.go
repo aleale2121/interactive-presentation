@@ -12,7 +12,7 @@ import (
 func TestVoteCurrentPollTx(t *testing.T) {
 	store := NewStore(testDB)
 	createdPresenationID := createRandomPresentationWithPolls(t, 2)
-	polls, err := store.GetPollsByPresentationID(context.Background(), createdPresenationID)
+	polls, err := store.ListPolls(context.Background(), createdPresenationID)
 	require.NoError(t, err)
 	require.NotEmpty(t, polls)
 	require.Len(t, polls, 2)
@@ -24,14 +24,14 @@ func TestVoteCurrentPollTx(t *testing.T) {
 	// initially no polls displayed for vote should return error
 	err = store.VoteCurrentPollTx(context.Background(), VoteParams{
 		PresentationID: createdPresenationID,
-		Pollid:         polls[0].PollID,
+		Pollid:         polls[0].ID,
 		Optionkey:      options[0].Optionkey,
 		Clientid:       util.RandomUUID().String(),
 	})
 	require.Error(t, err)
 
 	// slide to the first presentation
-	currPoll, err := testQueries.MoveForwardToNextPoll(context.Background(), createdPresenationID)
+	currPoll, err := testQueries.GetNextPoll(context.Background(), createdPresenationID)
 	require.NoError(t, err)
 	require.NotEmpty(t, currPoll)
 
@@ -45,7 +45,7 @@ func TestVoteCurrentPollTx(t *testing.T) {
 		})
 		require.NoError(t, err)
 	}
-	votes, err := testQueries.GetPollVotes(context.Background(), GetPollVotesParams{
+	votes, err := testQueries.GetVotes(context.Background(), GetVotesParams{
 		PresentationID: createdPresenationID,
 		PollID:         currPoll.ID,
 	})
@@ -58,7 +58,7 @@ func TestVoteDeadlock(t *testing.T) {
 	n := 100
 
 	createdPresenationID := createRandomPresentationWithPolls(t, 2)
-	polls, err := store.GetPollsByPresentationID(context.Background(), createdPresenationID)
+	polls, err := store.ListPolls(context.Background(), createdPresenationID)
 	require.NoError(t, err)
 	require.NotEmpty(t, polls)
 	require.Len(t, polls, 2)
@@ -68,7 +68,7 @@ func TestVoteDeadlock(t *testing.T) {
 	require.NoError(t, err)
 
 	// slide to the first presentation
-	currPoll, err := testQueries.MoveForwardToNextPoll(context.Background(), createdPresenationID)
+	currPoll, err := testQueries.GetNextPoll(context.Background(), createdPresenationID)
 	require.NoError(t, err)
 	require.NotEmpty(t, currPoll)
 
@@ -94,7 +94,7 @@ func TestVoteDeadlock(t *testing.T) {
 	}
 
 	// check the final updated votes
-	votes, err := testQueries.GetPollVotes(context.Background(), GetPollVotesParams{
+	votes, err := testQueries.GetVotes(context.Background(), GetVotesParams{
 		PresentationID: createdPresenationID,
 		PollID:         currPoll.ID,
 	})

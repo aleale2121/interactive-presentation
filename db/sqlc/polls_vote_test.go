@@ -13,7 +13,7 @@ import (
 func createRandomVote(t *testing.T) models.Vote {
 	createdPresenationID := createRandomPresentationWithPolls(t, 2)
 
-	polls, err := testQueries.GetPollsByPresentationID(context.Background(), createdPresenationID)
+	polls, err := testQueries.ListPolls(context.Background(), createdPresenationID)
 	require.NoError(t, err)
 	require.NotEmpty(t, polls)
 	require.Len(t, polls, 2)
@@ -25,7 +25,7 @@ func createRandomVote(t *testing.T) models.Vote {
 	// create vote with existing keys
 	for i := 0; i < len(options); i++ {
 		err = testQueries.CreateVote(context.Background(), CreateVoteParams{
-			Pollid:    polls[0].PollID,
+			Pollid:    polls[0].ID,
 			Optionkey: options[i].Optionkey,
 			Clientid:  util.RandomUUID().String(),
 		})
@@ -34,7 +34,7 @@ func createRandomVote(t *testing.T) models.Vote {
 
 	// create vote with non-existing option key
 	err = testQueries.CreateVote(context.Background(), CreateVoteParams{
-		Pollid:    polls[0].PollID,
+		Pollid:    polls[0].ID,
 		Optionkey: util.RandomUUID().String(),
 		Clientid:  util.RandomUUID().String(),
 	})
@@ -49,7 +49,7 @@ func createRandomVote(t *testing.T) models.Vote {
 	require.Error(t, err)
 
 	return models.Vote{
-		PollID:         polls[0].PollID,
+		PollID:         polls[0].ID,
 		PresentationID: createdPresenationID,
 		VoteCount:      len(options),
 	}
@@ -59,10 +59,10 @@ func TestCreateVote(t *testing.T) {
 	createRandomVote(t)
 }
 
-func TestGetPollVotes(t *testing.T) {
+func TestGetVotes(t *testing.T) {
 	vote := createRandomVote(t)
 
-	votes, err := testQueries.GetPollVotes(context.Background(), GetPollVotesParams{
+	votes, err := testQueries.GetVotes(context.Background(), GetVotesParams{
 		PresentationID: vote.PresentationID,
 		PollID:         vote.PollID,
 	})

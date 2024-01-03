@@ -14,13 +14,13 @@ import (
 type Querier interface {
 	CreatePresentationAndPolls(ctx context.Context, dollar_1 json.RawMessage) (uuid.UUID, error)
 	CreateVote(ctx context.Context, arg CreateVoteParams) error
-	GetPollVotes(ctx context.Context, arg GetPollVotesParams) ([]GetPollVotesRow, error)
-	GetPollsByPresentationID(ctx context.Context, presentationid uuid.UUID) ([]GetPollsByPresentationIDRow, error)
+	GetNextPoll(ctx context.Context, id uuid.UUID) (GetNextPollRow, error)
 	GetPresentation(ctx context.Context, id uuid.UUID) (Presentation, error)
 	GetPresentationAndPoll(ctx context.Context, arg GetPresentationAndPollParams) (GetPresentationAndPollRow, error)
 	GetPresentationCurrentPoll(ctx context.Context, presentationid uuid.UUID) (GetPresentationCurrentPollRow, error)
-	MoveBackwardToPreviousPoll(ctx context.Context, id uuid.UUID) (MoveBackwardToPreviousPollRow, error)
-	MoveForwardToNextPoll(ctx context.Context, id uuid.UUID) (MoveForwardToNextPollRow, error)
+	GetPreviousPoll(ctx context.Context, id uuid.UUID) (GetPreviousPollRow, error)
+	GetVotes(ctx context.Context, arg GetVotesParams) ([]GetVotesRow, error)
+	ListPolls(ctx context.Context, presentationid uuid.UUID) ([]ListPollsRow, error)
 }
 
 var _ Querier = (*Queries)(nil)

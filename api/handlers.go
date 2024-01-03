@@ -104,14 +104,14 @@ func (server *Server) GetPresentationHandler(c *gin.Context) {
 		return
 	}
 
-	polls, err := server.store.GetPollsByPresentationID(context.Background(), presentationID)
+	polls, err := server.store.ListPolls(context.Background(), presentationID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 	c.JSON(http.StatusOK, struct {
 		CurrentPollIndex int32                            `json:"current_poll_index"`
-		Polls            []db.GetPollsByPresentationIDRow `json:"polls"`
+		Polls            []db.ListPollsRow `json:"polls"`
 	}{
 		CurrentPollIndex: presentation.Currentpollindex.Int32,
 		Polls:            polls,
@@ -179,7 +179,7 @@ func (server *Server) GetPollVotesHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "The `poll_id` in the request body doesn't match the current poll."})
 		return
 	}
-	votes, err := server.store.GetPollVotes(context.Background(), db.GetPollVotesParams{
+	votes, err := server.store.GetVotes(context.Background(), db.GetVotesParams{
 		PresentationID: presentationID,
 		PollID:         pollID,
 	})
