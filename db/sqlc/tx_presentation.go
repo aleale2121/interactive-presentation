@@ -12,7 +12,7 @@ func (store *SQLStore) GetCurrentPoll(ctx context.Context, id uuid.UUID) (Curren
 	var result CurrentPoll
 	err := store.execTx(ctx, func(q *Queries) error {
 
-		poll, err := q.GetPresentationCurrentPoll(ctx, id)
+		poll, err := q.GetPoll(ctx, id)
 		if err != nil {
 			return err
 		}

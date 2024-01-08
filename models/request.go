@@ -11,5 +11,5 @@ type CreateVoteRequest struct {
 
 // CreatePresentationRequest represents the request model for creating a presentation.
 type CreatePresentionRequest struct {
-	Polls []Poll `json:"polls"`
+	Polls []PresentationPoll `json:"polls"`
 }

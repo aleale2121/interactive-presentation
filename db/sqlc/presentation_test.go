@@ -31,7 +31,7 @@ func TestGetPresentation(t *testing.T) {
 
 func TestGetPresentationCurrentPoll(t *testing.T) {
 	createdPresenationID := createRandomPresentationWithPolls(t, 2)
-	poll, err := testQueries.GetPresentationCurrentPoll(context.Background(), createdPresenationID)
+	poll, err := testQueries.GetPoll(context.Background(), createdPresenationID)
 	require.Error(t, err)
 	require.Empty(t, poll)
 
@@ -39,7 +39,7 @@ func TestGetPresentationCurrentPoll(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, nextPoll)
 
-	poll, err = testQueries.GetPresentationCurrentPoll(context.Background(), createdPresenationID)
+	poll, err = testQueries.GetPoll(context.Background(), createdPresenationID)
 	require.NoError(t, err)
 	require.NotEmpty(t, poll)
 	require.Equal(t, poll.ID, nextPoll.ID)
@@ -78,7 +78,7 @@ func TestGetNextPoll(t *testing.T) {
 	require.NotEmpty(t, polls)
 	require.Len(t, polls, 2)
 
-	poll, err := testQueries.GetPresentationCurrentPoll(context.Background(), createdPresenationID)
+	poll, err := testQueries.GetPoll(context.Background(), createdPresenationID)
 	require.Error(t, err)
 	require.Empty(t, poll)
 
@@ -88,7 +88,7 @@ func TestGetNextPoll(t *testing.T) {
 		require.NotEmpty(t, nextPoll)
 		require.Equal(t, polls[i].ID.String(), nextPoll.ID.String())
 
-		currPoll, err := testQueries.GetPresentationCurrentPoll(context.Background(), createdPresenationID)
+		currPoll, err := testQueries.GetPoll(context.Background(), createdPresenationID)
 		require.NoError(t, err)
 		require.NotEmpty(t, currPoll)
 		require.Equal(t, polls[i].ID.String(), currPoll.ID.String())
@@ -99,7 +99,7 @@ func TestGetNextPoll(t *testing.T) {
 	require.Error(t, err)
 	require.Empty(t, nextPoll)
 
-	currPoll, err := testQueries.GetPresentationCurrentPoll(context.Background(), createdPresenationID)
+	currPoll, err := testQueries.GetPoll(context.Background(), createdPresenationID)
 	require.NoError(t, err)
 	require.NotEmpty(t, currPoll)
 	require.Equal(t, polls[1].ID.String(), currPoll.ID.String())
@@ -114,7 +114,7 @@ func TestGetPreviousPoll(t *testing.T) {
 	require.Len(t, polls, 2)
 
 	// currently no poll is displayed
-	poll, err := testQueries.GetPresentationCurrentPoll(context.Background(), createdPresenationID)
+	poll, err := testQueries.GetPoll(context.Background(), createdPresenationID)
 	require.Error(t, err)
 	require.Empty(t, poll)
 
@@ -133,7 +133,7 @@ func TestGetPreviousPoll(t *testing.T) {
 	require.Equal(t, polls[0].ID.String(), prevPoll.ID.String())
 
 	//check the current displayed poll
-	currPoll, err := testQueries.GetPresentationCurrentPoll(context.Background(), createdPresenationID)
+	currPoll, err := testQueries.GetPoll(context.Background(), createdPresenationID)
 	require.NoError(t, err)
 	require.NotEmpty(t, currPoll)
 	require.Equal(t, prevPoll.ID.String(), currPoll.ID.String())

@@ -64,8 +64,7 @@ FROM
 WHERE 
   pr.id=sqlc.arg(presentation_id) AND pl.id=sqlc.arg(poll_id);
 
-
--- name: GetPresentationCurrentPoll :one
+-- name: GetPoll :one
 SELECT
   p.id AS id,
   p.question AS question,

@@ -1,10 +1,15 @@
 package models
 
-import "github.com/google/uuid"
+import (
+	"encoding/json"
+
+	"github.com/google/uuid"
+)
 
 type Poll struct {
-	Question string   `json:"question" binding:"required"`
-	Options  []Option `json:"options" binding:"required,dive"`
+	ID       uuid.UUID       `db:"id" json:"id" binding:"required"`
+	Question string          `db:"question" json:"question" binding:"required"`
+	Options  json.RawMessage `db:"options"`
 }
 
 type Option struct {
@@ -17,4 +22,9 @@ type Vote struct {
 	PresentationID uuid.UUID
 	Options        []string
 	VoteCount      int
+}
+
+type PresentationPoll struct {
+	Question string   `json:"question" binding:"required"`
+	Options  []Option `json:"options" binding:"required,dive"`
 }
