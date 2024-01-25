@@ -37,3 +37,5 @@ slide_load_test:
 vote_load_test:
 	hey -n 10000 -c 100 -H "Content-Type: application/json" -m POST -d '{"poll_id":"'"$(POLL_ID)"'","key":"A","client_id":"'"$(shell uuidgen)"'"}' '$(BASE_URL)/presentations/$(PRESENTATION_ID)/polls/current/votes'
 
+clean_cache:
+	go clean -testcache

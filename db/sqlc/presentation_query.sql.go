@@ -98,9 +98,9 @@ WHERE upc.id IS NOT NULL
 `
 
 type GetNextPollRow struct {
-	ID       uuid.UUID       `db:"id"`
-	Question string          `db:"question"`
-	Options  json.RawMessage `db:"options"`
+	ID       uuid.UUID       `db:"id" json:"id"`
+	Question string          `db:"question" json:"question"`
+	Options  json.RawMessage `db:"options" json:"options"`
 }
 
 func (q *Queries) GetNextPoll(ctx context.Context, id uuid.UUID) (GetNextPollRow, error) {
@@ -129,9 +129,9 @@ WHERE p.presentationid = $1 and p.pollindex=(SELECT currentpollindex
 `
 
 type GetPollRow struct {
-	ID       uuid.UUID       `db:"id"`
-	Question string          `db:"question"`
-	Options  json.RawMessage `db:"options"`
+	ID       uuid.UUID       `db:"id" json:"id"`
+	Question string          `db:"question" json:"question"`
+	Options  json.RawMessage `db:"options" json:"options"`
 }
 
 func (q *Queries) GetPoll(ctx context.Context, presentationid uuid.UUID) (GetPollRow, error) {
@@ -168,16 +168,16 @@ WHERE
 `
 
 type GetPresentationAndPollParams struct {
-	PresentationID uuid.UUID `db:"presentation_id"`
-	PollID         uuid.UUID `db:"poll_id"`
+	PresentationID uuid.UUID `db:"presentation_id" json:"presentation_id"`
+	PollID         uuid.UUID `db:"poll_id" json:"poll_id"`
 }
 
 type GetPresentationAndPollRow struct {
-	PresentationID   uuid.UUID     `db:"presentation_id"`
-	Currentpollindex sql.NullInt32 `db:"currentpollindex"`
-	PollID           uuid.UUID     `db:"poll_id"`
-	Question         string        `db:"question"`
-	Pollindex        int32         `db:"pollindex"`
+	PresentationID   uuid.UUID     `db:"presentation_id" json:"presentation_id"`
+	Currentpollindex sql.NullInt32 `db:"currentpollindex" json:"currentpollindex"`
+	PollID           uuid.UUID     `db:"poll_id" json:"poll_id"`
+	Question         string        `db:"question" json:"question"`
+	Pollindex        int32         `db:"pollindex" json:"pollindex"`
 }
 
 func (q *Queries) GetPresentationAndPoll(ctx context.Context, arg GetPresentationAndPollParams) (GetPresentationAndPollRow, error) {
@@ -218,9 +218,9 @@ WHERE upc.id IS NOT NULL
 `
 
 type GetPreviousPollRow struct {
-	ID       uuid.UUID       `db:"id"`
-	Question string          `db:"question"`
-	Options  json.RawMessage `db:"options"`
+	ID       uuid.UUID       `db:"id" json:"id"`
+	Question string          `db:"question" json:"question"`
+	Options  json.RawMessage `db:"options" json:"options"`
 }
 
 func (q *Queries) GetPreviousPoll(ctx context.Context, id uuid.UUID) (GetPreviousPollRow, error) {
@@ -251,9 +251,9 @@ ORDER BY
 `
 
 type ListPollsRow struct {
-	ID       uuid.UUID       `db:"id"`
-	Question string          `db:"question"`
-	Options  json.RawMessage `db:"options"`
+	ID       uuid.UUID       `db:"id" json:"id"`
+	Question string          `db:"question" json:"question"`
+	Options  json.RawMessage `db:"options" json:"options"`
 }
 
 func (q *Queries) ListPolls(ctx context.Context, presentationid uuid.UUID) ([]ListPollsRow, error) {

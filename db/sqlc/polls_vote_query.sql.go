@@ -19,9 +19,9 @@ VALUES
 `
 
 type CreateVoteParams struct {
-	Pollid    uuid.UUID `db:"pollid"`
-	Optionkey string    `db:"optionkey"`
-	Clientid  string    `db:"clientid"`
+	Pollid    uuid.UUID `db:"pollid" json:"pollid"`
+	Optionkey string    `db:"optionkey" json:"optionkey"`
+	Clientid  string    `db:"clientid" json:"clientid"`
 }
 
 func (q *Queries) CreateVote(ctx context.Context, arg CreateVoteParams) error {
@@ -42,13 +42,13 @@ ORDER BY votes.optionkey
 `
 
 type GetVotesParams struct {
-	PresentationID uuid.UUID `db:"presentation_id"`
-	PollID         uuid.UUID `db:"poll_id"`
+	PresentationID uuid.UUID `db:"presentation_id" json:"presentation_id"`
+	PollID         uuid.UUID `db:"poll_id" json:"poll_id"`
 }
 
 type GetVotesRow struct {
-	Key      string `db:"key"`
-	ClientID string `db:"client_id"`
+	Key      string `db:"key" json:"key"`
+	ClientID string `db:"client_id" json:"client_id"`
 }
 
 func (q *Queries) GetVotes(ctx context.Context, arg GetVotesParams) ([]GetVotesRow, error) {

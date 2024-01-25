@@ -11,28 +11,28 @@ import (
 )
 
 type Option struct {
-	ID          uuid.UUID `db:"id"`
-	Pollid      uuid.UUID `db:"pollid"`
-	Optionkey   string    `db:"optionkey"`
-	Optionvalue string    `db:"optionvalue"`
+	ID          uuid.UUID `db:"id" json:"id"`
+	Pollid      uuid.UUID `db:"pollid" json:"pollid"`
+	Optionkey   string    `db:"optionkey" json:"optionkey"`
+	Optionvalue string    `db:"optionvalue" json:"optionvalue"`
 }
 
 type Poll struct {
-	ID             uuid.UUID    `db:"id"`
-	Presentationid uuid.UUID    `db:"presentationid"`
-	Question       string       `db:"question"`
-	Pollindex      int32        `db:"pollindex"`
-	Createdat      sql.NullTime `db:"createdat"`
+	ID             uuid.UUID    `db:"id" json:"id"`
+	Presentationid uuid.UUID    `db:"presentationid" json:"presentationid"`
+	Question       string       `db:"question" json:"question"`
+	Pollindex      int32        `db:"pollindex" json:"pollindex"`
+	Createdat      sql.NullTime `db:"createdat" json:"createdat"`
 }
 
 type Presentation struct {
-	ID               uuid.UUID     `db:"id"`
-	Currentpollindex sql.NullInt32 `db:"currentpollindex"`
+	ID               uuid.UUID     `db:"id" json:"id"`
+	Currentpollindex sql.NullInt32 `db:"currentpollindex" json:"currentpollindex"`
 }
 
 type Vote struct {
-	ID        uuid.UUID `db:"id"`
-	Pollid    uuid.UUID `db:"pollid"`
-	Optionkey string    `db:"optionkey"`
-	Clientid  string    `db:"clientid"`
+	ID        uuid.UUID `db:"id" json:"id"`
+	Pollid    uuid.UUID `db:"pollid" json:"pollid"`
+	Optionkey string    `db:"optionkey" json:"optionkey"`
+	Clientid  string    `db:"clientid" json:"clientid"`
 }
