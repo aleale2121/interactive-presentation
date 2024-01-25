@@ -1,4 +1,4 @@
-package models
+package model
 
 // PresentionResponse represents the request model for creating a presentation.
 type PresentionResponse struct {

@@ -1,9 +1,9 @@
-package db
+package persistence
 
 import (
 	"context"
 
-	"github.com/aleale2121/interactive-presentation/models"
+	"github.com/aleale2121/interactive-presentation/internal/constant/model"
 )
 
 func (store *SQLStore) VoteCurrentPollTx(ctx context.Context, arg VoteParams) error {
@@ -15,10 +15,10 @@ func (store *SQLStore) VoteCurrentPollTx(ctx context.Context, arg VoteParams) er
 		})
 
 		if err != nil {
-			return models.ErrNotFound
+			return model.ErrNotFound
 		}
 		if result.Currentpollindex.Int32 != result.Pollindex {
-			return models.ErrConflict
+			return model.ErrConflict
 		}
 
 		err = q.CreateVote(ctx, CreateVoteParams{

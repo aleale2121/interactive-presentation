@@ -1,16 +1,16 @@
-package db
+package persistence
 
 import (
 	"context"
 	"encoding/json"
 	"testing"
 
-	"github.com/aleale2121/interactive-presentation/models"
+	"github.com/aleale2121/interactive-presentation/internal/constant/model"
 	"github.com/aleale2121/interactive-presentation/util"
 	"github.com/stretchr/testify/require"
 )
 
-func createRandomVote(t *testing.T) models.Vote {
+func createRandomVote(t *testing.T) model.Vote {
 	createdPresenationID := createRandomPresentationWithPolls(t, 2)
 
 	polls, err := testQueries.ListPolls(context.Background(), createdPresenationID)
@@ -48,7 +48,7 @@ func createRandomVote(t *testing.T) models.Vote {
 	})
 	require.Error(t, err)
 
-	return models.Vote{
+	return model.Vote{
 		PollID:         polls[0].ID,
 		PresentationID: createdPresenationID,
 		VoteCount:      len(options),

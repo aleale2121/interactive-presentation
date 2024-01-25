@@ -7,6 +7,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.16.2
 	github.com/google/uuid v1.4.0
 	github.com/lib/pq v1.10.9
+	github.com/sirupsen/logrus v1.9.2
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.8.4
 )

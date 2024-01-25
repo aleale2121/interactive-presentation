@@ -2,11 +2,11 @@ version: '2'
 sql:
 - engine: postgresql
   schema: db/migration/
-  queries: db/query/
+  queries: internal/constant/query/
   gen:
     go:
-      package: db
-      out: db/sqlc
+      package: persistence
+      out: internal/storage/persistence/
       emit_db_tags: true
       emit_json_tags: true
       emit_prepared_queries: false
