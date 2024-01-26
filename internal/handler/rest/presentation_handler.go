@@ -2,11 +2,10 @@ package rest
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/aleale2121/interactive-presentation/internal/constant/model"
-	db "github.com/aleale2121/interactive-presentation/internal/storage/persistence"
+	"github.com/aleale2121/interactive-presentation/internal/module/presentation"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -18,21 +17,20 @@ type PresentationHandler interface {
 }
 
 type presentationHandler struct {
-	logger *logrus.Logger
-	store  db.Store
+	logger  *logrus.Logger
+	useCase presentation.Usecase
 }
 
-func NewPresentationHandler(logger *logrus.Logger,
-	store db.Store) PresentationHandler {
+func NewPresentationHandler(logger *logrus.Logger, usecase presentation.Usecase) PresentationHandler {
 	return presentationHandler{
-		logger: logger,
-		store:  store,
+		logger:  logger,
+		useCase: usecase,
 	}
 }
 
 // CreatePresentationHandler handles the HTTP request for creating a new presentation.
 func (server presentationHandler) CreatePresentationHandler(c *gin.Context) {
-	var presenation model.CreatePresentionRequest
+	var presenation model.CreatePresentionRequestDTO
 	if err := c.ShouldBindJSON(&presenation); err != nil {
 		c.JSON(http.StatusBadRequest, "Mandatory body parameters missing or have incorrect type")
 		return
@@ -43,15 +41,10 @@ func (server presentationHandler) CreatePresentationHandler(c *gin.Context) {
 		return
 	}
 
-	jsonb, err := json.Marshal(presenation.Polls)
+	//TODO: error validation
+	presID, err := server.useCase.CreatePresentation(context.Background(), &presenation)
 	if err != nil {
-		c.AbortWithStatus(400)
-		return
-	}
-
-	presID, err := server.store.CreatePresentationAndPolls(context.Background(), []byte(jsonb))
-	if err != nil {
-		c.AbortWithStatus(400)
+		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
@@ -67,26 +60,11 @@ func (server presentationHandler) GetPresentationHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
-	presentation, err := server.store.GetPresentation(context.Background(), presentationID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, "There is no presentation with the provided `presentation_id`")
-		return
-	}
-	if presentation.Currentpollindex.Int32 == 0 {
-		c.JSON(http.StatusConflict, "There are no polls currently displayed")
-		return
-	}
-
-	polls, err := server.store.ListPolls(context.Background(), presentationID)
+	//TODO: error validation
+	presentationWithPoll, err := server.useCase.GetPresentation(context.Background(), presentationID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, struct {
-		CurrentPollIndex int32             `json:"current_poll_index"`
-		Polls            []db.ListPollsRow `json:"polls"`
-	}{
-		CurrentPollIndex: presentation.Currentpollindex.Int32,
-		Polls:            polls,
-	})
+	c.JSON(http.StatusOK, presentationWithPoll)
 }

@@ -6,17 +6,17 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/aleale2121/interactive-presentation/internal/constant/model"
 	"github.com/google/uuid"
 )
 
 // Store defines all functions to execute db queries and transactions
 type Store interface {
 	Querier
-	GetCurrentPoll(context.Context, uuid.UUID) (CurrentPoll, error)
-	UpdateCurrentPollToForwardTx(ctx context.Context, id uuid.UUID) (CurrentPoll, error)
-	UpdateCurrentPollToPreviousTx(ctx context.Context, id uuid.UUID) (CurrentPoll, error) 
+	GetCurrentPoll(context.Context, uuid.UUID) (model.CurrentPoll, error)
+	UpdateCurrentPollToForwardTx(ctx context.Context, id uuid.UUID) (model.CurrentPoll, error)
+	UpdateCurrentPollToPreviousTx(ctx context.Context, id uuid.UUID) (model.CurrentPoll, error)
 	VoteCurrentPollTx(context.Context, VoteParams) error
-
 }
 
 // SQLStore provides all functions to execute SQL queries and transactions

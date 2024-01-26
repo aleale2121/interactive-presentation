@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/aleale2121/interactive-presentation/internal/constant/model"
 	"github.com/google/uuid"
 )
 
-func (store *SQLStore) GetCurrentPoll(ctx context.Context, id uuid.UUID) (CurrentPoll, error) {
-	var result CurrentPoll
+func (store *SQLStore) GetCurrentPoll(ctx context.Context, id uuid.UUID) (model.CurrentPoll, error) {
+	var result model.CurrentPoll
 	err := store.execTx(ctx, func(q *Queries) error {
 
 		poll, err := q.GetPoll(ctx, id)
@@ -18,7 +19,7 @@ func (store *SQLStore) GetCurrentPoll(ctx context.Context, id uuid.UUID) (Curren
 		}
 		result.ID = poll.ID.String()
 		result.Question = poll.Question
-		var optionRows []PollOption
+		var optionRows []model.PollOption
 		err = json.Unmarshal(poll.Options, &optionRows)
 		if err != nil {
 			return err
@@ -30,8 +31,8 @@ func (store *SQLStore) GetCurrentPoll(ctx context.Context, id uuid.UUID) (Curren
 	return result, err
 }
 
-func (store *SQLStore) UpdateCurrentPollToForwardTx(ctx context.Context, id uuid.UUID) (CurrentPoll, error) {
-	var result CurrentPoll
+func (store *SQLStore) UpdateCurrentPollToForwardTx(ctx context.Context, id uuid.UUID) (model.CurrentPoll, error) {
+	var result model.CurrentPoll
 	err := store.execTx(ctx, func(q *Queries) error {
 
 		// Update the current poll index for the presentation.
@@ -53,8 +54,8 @@ func (store *SQLStore) UpdateCurrentPollToForwardTx(ctx context.Context, id uuid
 
 }
 
-func (store *SQLStore) UpdateCurrentPollToPreviousTx(ctx context.Context, id uuid.UUID) (CurrentPoll, error) {
-	var result CurrentPoll
+func (store *SQLStore) UpdateCurrentPollToPreviousTx(ctx context.Context, id uuid.UUID) (model.CurrentPoll, error) {
+	var result model.CurrentPoll
 	err := store.execTx(ctx, func(q *Queries) error {
 
 		// Update the current poll index for the presentation.

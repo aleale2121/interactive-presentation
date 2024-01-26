@@ -36,7 +36,7 @@ func (server voteHandler) CreateVoteHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	var vote model.CreateVoteRequest
+	var vote model.CreateVoteRequestDTO
 	if err := c.ShouldBindJSON(&vote); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

@@ -11,6 +11,8 @@ import (
 
 	"github.com/aleale2121/interactive-presentation/internal/glue/routing"
 	"github.com/aleale2121/interactive-presentation/internal/handler/rest"
+	"github.com/aleale2121/interactive-presentation/internal/module/poll"
+	"github.com/aleale2121/interactive-presentation/internal/module/presentation"
 	db "github.com/aleale2121/interactive-presentation/internal/storage/persistence"
 
 	"github.com/aleale2121/interactive-presentation/platform/routers"
@@ -48,10 +50,12 @@ func Init() {
 	logger.Println("Migrations applied successfully.")
 	store := db.NewStore(conn)
 
-	presentationHandler := rest.NewPresentationHandler(logger, store)
+	presentationUseCase := presentation.Initialize(store)
+	presentationHandler := rest.NewPresentationHandler(logger, presentationUseCase)
 	presentationRouting := routing.PresentationRouting(presentationHandler)
 
-	pollHandler := rest.NewPollsHandler(logger, store)
+	pollUseCase := poll.Initialize(store)
+	pollHandler := rest.NewPollsHandler(logger, pollUseCase)
 	pollRouting := routing.PollRouting(pollHandler)
 
 	voteHandler := rest.NewVoteHandler(logger, store)

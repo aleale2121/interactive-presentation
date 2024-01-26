@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	db "github.com/aleale2121/interactive-presentation/internal/storage/persistence"
+	"github.com/aleale2121/interactive-presentation/internal/module/poll"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -16,15 +16,15 @@ type PollHandler interface {
 }
 
 type pollHandler struct {
-	logger *logrus.Logger
-	store  db.Store
+	logger  *logrus.Logger
+	useCase poll.Usecase
 }
 
 func NewPollsHandler(logger *logrus.Logger,
-	store db.Store) PollHandler {
+	useCase poll.Usecase) PollHandler {
 	return pollHandler{
-		logger: logger,
-		store:  store,
+		logger:  logger,
+		useCase: useCase,
 	}
 }
 
@@ -35,12 +35,7 @@ func (server pollHandler) UpdateCurrentPollHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	_, err = server.store.GetPresentation(context.Background(), presentationID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "No presentation found"})
-		return
-	}
-	currentPoll, err := server.store.UpdateCurrentPollToForwardTx(context.Background(), presentationID)
+	currentPoll, err := server.useCase.UpdateCurrentPoll(context.Background(), presentationID)
 	if err != nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "The presentation ran out of polls."})
 		return
@@ -56,17 +51,8 @@ func (server pollHandler) GetCurrentPollHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
-	presentation, err := server.store.GetPresentation(context.Background(), presentationID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, "There is no presentation with the provided `presentation_id`")
-		return
-	}
-	if presentation.Currentpollindex.Int32 == 0 {
-		c.JSON(http.StatusConflict, "There are no polls currently displayed")
-		return
-	}
 
-	currentPoll, err := server.store.GetCurrentPoll(context.Background(), presentationID)
+	currentPoll, err := server.useCase.GetCurrentPoll(context.Background(), presentationID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return

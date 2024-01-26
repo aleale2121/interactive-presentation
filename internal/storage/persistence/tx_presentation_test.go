@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/aleale2121/interactive-presentation/internal/constant/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -34,7 +35,7 @@ func TestUpdateCurrentPollTxDeadlock(t *testing.T) {
 	presID := createRandomPresentationWithPolls(t, n)
 
 	errs := make(chan error)
-	results := make(chan CurrentPoll)
+	results := make(chan model.CurrentPoll)
 
 	// run n concurrent vote transaction
 	for i := 0; i < n-1; i++ {
