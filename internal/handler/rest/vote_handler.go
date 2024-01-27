@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/aleale2121/interactive-presentation/internal/constant/model"
-	db "github.com/aleale2121/interactive-presentation/internal/storage/persistence"
+	"github.com/aleale2121/interactive-presentation/internal/module/vote"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -17,15 +17,15 @@ type VoteHandler interface {
 }
 
 type voteHandler struct {
-	logger *logrus.Logger
-	store  db.Store
+	logger  *logrus.Logger
+	useCase vote.Usecase
 }
 
 func NewVoteHandler(logger *logrus.Logger,
-	store db.Store) VoteHandler {
+	useCase vote.Usecase) VoteHandler {
 	return voteHandler{
-		logger: logger,
-		store:  store,
+		logger:  logger,
+		useCase: useCase,
 	}
 }
 
@@ -36,18 +36,13 @@ func (server voteHandler) CreateVoteHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	var vote model.CreateVoteRequestDTO
-	if err := c.ShouldBindJSON(&vote); err != nil {
+	var voteParam model.CreateVoteRequestDTO
+	if err := c.ShouldBindJSON(&voteParam); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	err = server.store.VoteCurrentPollTx(context.Background(), db.VoteParams{
-		PresentationID: presentationID,
-		Pollid:         vote.PollID,
-		Optionkey:      vote.Key,
-		Clientid:       vote.ClientId,
-	})
+	err = server.useCase.CreateVote(context.Background(), presentationID, voteParam)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -77,23 +72,8 @@ func (server voteHandler) GetPollVotesHandler(c *gin.Context) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
-	result, err := server.store.GetPresentationAndPoll(context.Background(), db.GetPresentationAndPollParams{
-		PresentationID: presentationID,
-		PollID:         pollID,
-	})
-
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Either `presentation_id` or `poll_id` not found"})
-		return
-	}
-	if result.Currentpollindex.Int32 != result.Pollindex {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "The `poll_id` in the request body doesn't match the current poll."})
-		return
-	}
-	votes, err := server.store.GetVotes(context.Background(), db.GetVotesParams{
-		PresentationID: presentationID,
-		PollID:         pollID,
-	})
+	//TODO: error handle
+	votes, err := server.useCase.GetPollVotes(context.Background(), presentationID, pollID)
 
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)

@@ -13,6 +13,7 @@ import (
 	"github.com/aleale2121/interactive-presentation/internal/handler/rest"
 	"github.com/aleale2121/interactive-presentation/internal/module/poll"
 	"github.com/aleale2121/interactive-presentation/internal/module/presentation"
+	"github.com/aleale2121/interactive-presentation/internal/module/vote"
 	db "github.com/aleale2121/interactive-presentation/internal/storage/persistence"
 
 	"github.com/aleale2121/interactive-presentation/platform/routers"
@@ -58,7 +59,8 @@ func Init() {
 	pollHandler := rest.NewPollsHandler(logger, pollUseCase)
 	pollRouting := routing.PollRouting(pollHandler)
 
-	voteHandler := rest.NewVoteHandler(logger, store)
+	voteUseCase := vote.Initialize(store)
+	voteHandler := rest.NewVoteHandler(logger, voteUseCase)
 	voteRouting := routing.VoteRouting(voteHandler)
 
 	var routersList []routers.Router
