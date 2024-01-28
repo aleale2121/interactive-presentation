@@ -41,7 +41,6 @@ func (server presentationHandler) CreatePresentationHandler(c *gin.Context) {
 		return
 	}
 
-	//TODO: error validation
 	presID, err := server.useCase.CreatePresentation(context.Background(), &presenation)
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)

@@ -72,12 +72,22 @@ func (server voteHandler) GetPollVotesHandler(c *gin.Context) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
-	//TODO: error handle
 	votes, err := server.useCase.GetPollVotes(context.Background(), presentationID, pollID)
-
 	if err != nil {
-		c.AbortWithStatus(http.StatusBadRequest)
-		return
+		if err != nil {
+			switch err {
+			case model.ErrNotFound:
+				c.JSON(http.StatusNotFound, gin.H{"error": "Either `presentation_id` or `poll_id` not found"})
+				return
+			case model.ErrConflict:
+				c.JSON(http.StatusBadRequest, gin.H{"error": "The `poll_id` in the request body doesn't match the current poll."})
+				return
+			default:
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				c.AbortWithStatus(http.StatusBadRequest)
+				return
+			}
+		}
 	}
 
 	c.JSON(http.StatusOK, votes)

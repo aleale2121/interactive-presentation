@@ -2,7 +2,6 @@ package vote
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/aleale2121/interactive-presentation/internal/constant/model"
 	db "github.com/aleale2121/interactive-presentation/internal/storage/persistence"
@@ -43,12 +42,10 @@ func (s service) GetPollVotes(ctx context.Context, presentationID, pollID uuid.U
 	})
 
 	if err != nil {
-		// c.JSON(http.StatusNotFound, gin.H{"error": "Either `presentation_id` or `poll_id` not found"})
-		return []db.GetVotesRow{}, fmt.Errorf("either `presentation_id` or `poll_id` not found")
+		return []db.GetVotesRow{}, model.ErrNotFound
 	}
 	if result.Currentpollindex.Int32 != result.Pollindex {
-		// c.JSON(http.StatusBadRequest, gin.H{"error": "The `poll_id` in the request body doesn't match the current poll."})
-		return []db.GetVotesRow{}, fmt.Errorf("the `poll_id` in the request body doesn't match the current poll")
+		return []db.GetVotesRow{}, model.ErrConflict
 	}
 	votes, err := s.store.GetVotes(context.Background(), db.GetVotesParams{
 		PresentationID: presentationID,

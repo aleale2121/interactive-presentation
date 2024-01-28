@@ -30,13 +30,11 @@ func Initialize(
 func (s service) CreatePresentation(ctx context.Context, presenation *model.CreatePresentionRequestDTO) (uuid.UUID, error) {
 	jsonb, err := json.Marshal(presenation.Polls)
 	if err != nil {
-		// c.AbortWithStatus(http.StatusInternalServerError)
 		return uuid.Nil, err
 	}
 
 	presID, err := s.store.CreatePresentationAndPolls(context.Background(), []byte(jsonb))
 	if err != nil {
-		// c.AbortWithStatus(http.StatusBadRequest)
 		return uuid.Nil, err
 	}
 
@@ -73,12 +71,4 @@ func (s service) GetPresentation(ctx context.Context, presentationID uuid.UUID) 
 			return pollList
 		}(),
 	}, nil
-
-	// c.JSON(http.StatusOK, struct {
-	// 	CurrentPollIndex int32             `json:"current_poll_index"`
-	// 	Polls            []db.ListPollsRow `json:"polls"`
-	// }{
-	// 	CurrentPollIndex: presentation.Currentpollindex.Int32,
-	// 	Polls:            polls,
-	// })
 }
