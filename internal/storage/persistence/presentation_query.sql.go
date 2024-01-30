@@ -62,8 +62,8 @@ SELECT id
 FROM presentations_cte
 `
 
-func (q *Queries) CreatePresentationAndPolls(ctx context.Context, dollar_1 json.RawMessage) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, createPresentationAndPolls, dollar_1)
+func (q *Queries) CreatePresentationAndPolls(ctx context.Context, polls json.RawMessage) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, createPresentationAndPolls, polls)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err

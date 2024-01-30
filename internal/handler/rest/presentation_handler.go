@@ -56,14 +56,23 @@ func (server presentationHandler) CreatePresentationHandler(c *gin.Context) {
 func (server presentationHandler) GetPresentationHandler(c *gin.Context) {
 	presentationID, err := uuid.Parse(c.Param("presentation_id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	//TODO: error validation
 	presentationWithPoll, err := server.useCase.GetPresentation(context.Background(), presentationID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, err.Error())
-		return
+		switch err {
+		case model.ErrNotFound:
+			c.JSON(http.StatusNotFound, gin.H{"error": "there is no presentation with the provided `presentation_id`"})
+			return
+		case model.ErrNoPollDisplayed:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "there are no polls currently displayed"})
+			return
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
 	}
 	c.JSON(http.StatusOK, presentationWithPoll)
 }

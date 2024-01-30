@@ -18,7 +18,7 @@ func (store *SQLStore) VoteCurrentPollTx(ctx context.Context, arg VoteParams) er
 			return model.ErrNotFound
 		}
 		if result.Currentpollindex.Int32 != result.Pollindex {
-			return model.ErrConflict
+			return model.ErrIDMismatch
 		}
 
 		err = q.CreateVote(ctx, CreateVoteParams{

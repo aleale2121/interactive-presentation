@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/aleale2121/interactive-presentation/internal/constant/model"
 	"github.com/aleale2121/interactive-presentation/internal/module/poll"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -37,8 +38,17 @@ func (server pollHandler) UpdateCurrentPollHandler(c *gin.Context) {
 	}
 	currentPoll, err := server.useCase.UpdateCurrentPoll(context.Background(), presentationID)
 	if err != nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "The presentation ran out of polls."})
-		return
+		switch err {
+		case model.ErrNotFound:
+			c.JSON(http.StatusNotFound, gin.H{"error": "there is no presentation with the provided `presentation_id`"})
+			return
+		case model.ErrRunOutOfIndex:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "The presentation ran out of polls."})
+			return
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}		
 	}
 
 	c.JSON(http.StatusOK, currentPoll)
@@ -54,8 +64,21 @@ func (server pollHandler) GetCurrentPollHandler(c *gin.Context) {
 
 	currentPoll, err := server.useCase.GetCurrentPoll(context.Background(), presentationID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, err.Error())
-		return
+		switch err {
+		case model.ErrNotFound:
+			c.JSON(http.StatusNotFound, gin.H{"error": "there is no presentation with the provided `presentation_id`"})
+			return
+		case model.ErrNoPollDisplayed:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "there are no polls currently displayed"})
+			return
+		case model.ErrRunOutOfIndex:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "The presentation ran out of polls."})
+			return
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
 	}
 	c.JSON(http.StatusOK, currentPoll)
 }

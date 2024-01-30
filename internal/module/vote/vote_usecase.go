@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Usecase contains the function of business logic of domain poll
+// Usecase contains the function of business logic of domain voter
 type Usecase interface {
 	CreateVote(ctx context.Context, presentationID uuid.UUID, param model.CreateVoteRequestDTO) error
 	GetPollVotes(ctx context.Context, presentationID, pollID uuid.UUID) ([]db.GetVotesRow, error)
@@ -18,7 +18,7 @@ type service struct {
 	store db.Store
 }
 
-// Initialize takes all necessary service for domain presentation to run the business logic of domain presentation
+// Initialize takes all necessary service for domain vote to run the business logic of domain vote
 func Initialize(
 	store db.Store,
 ) Usecase {
@@ -45,7 +45,7 @@ func (s service) GetPollVotes(ctx context.Context, presentationID, pollID uuid.U
 		return []db.GetVotesRow{}, model.ErrNotFound
 	}
 	if result.Currentpollindex.Int32 != result.Pollindex {
-		return []db.GetVotesRow{}, model.ErrConflict
+		return []db.GetVotesRow{}, model.ErrIDMismatch
 	}
 	votes, err := s.store.GetVotes(context.Background(), db.GetVotesParams{
 		PresentationID: presentationID,

@@ -4,5 +4,7 @@ import "errors"
 
 var (
 	ErrNotFound = errors.New("not found")
-	ErrConflict = errors.New("conflict")
+	ErrIDMismatch= errors.New("id mismached")
+	ErrNoPollDisplayed = errors.New("not displayed")
+	ErrRunOutOfIndex = errors.New("poll run out of index")
 )

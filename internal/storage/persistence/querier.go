@@ -12,7 +12,7 @@ import (
 )
 
 type Querier interface {
-	CreatePresentationAndPolls(ctx context.Context, dollar_1 json.RawMessage) (uuid.UUID, error)
+	CreatePresentationAndPolls(ctx context.Context, polls json.RawMessage) (uuid.UUID, error)
 	CreateVote(ctx context.Context, arg CreateVoteParams) error
 	GetNextPoll(ctx context.Context, id uuid.UUID) (GetNextPollRow, error)
 	GetPoll(ctx context.Context, presentationid uuid.UUID) (GetPollRow, error)

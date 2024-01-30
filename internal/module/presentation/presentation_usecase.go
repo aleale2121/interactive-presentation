@@ -3,7 +3,6 @@ package presentation
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/aleale2121/interactive-presentation/internal/constant/model"
 	db "github.com/aleale2121/interactive-presentation/internal/storage/persistence"
@@ -33,7 +32,7 @@ func (s service) CreatePresentation(ctx context.Context, presenation *model.Crea
 		return uuid.Nil, err
 	}
 
-	presID, err := s.store.CreatePresentationAndPolls(context.Background(), []byte(jsonb))
+	presID, err := s.store.CreatePresentationAndPolls(context.Background(), jsonb)
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -44,20 +43,18 @@ func (s service) CreatePresentation(ctx context.Context, presenation *model.Crea
 func (s service) GetPresentation(ctx context.Context, presentationID uuid.UUID) (model.PresentionResponseDTO, error) {
 	presentation, err := s.store.GetPresentation(context.Background(), presentationID)
 	if err != nil {
-		// c.JSON(http.StatusNotFound, "There is no presentation with the provided `presentation_id`")
-		return model.PresentionResponseDTO{}, fmt.Errorf("there is no presentation with the provided `presentation_id`")
+		return model.PresentionResponseDTO{}, model.ErrNotFound
 	}
+	
 	if presentation.Currentpollindex.Int32 == 0 {
-		// c.JSON(http.StatusConflict, "There are no polls currently displayed")
-		return model.PresentionResponseDTO{}, fmt.Errorf("there are no polls currently displayed")
+		return model.PresentionResponseDTO{}, model.ErrNoPollDisplayed
 	}
 
 	polls, err := s.store.ListPolls(context.Background(), presentationID)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, err.Error())
 		return model.PresentionResponseDTO{}, err
-
 	}
+
 	return model.PresentionResponseDTO{
 		CurrentPollIndex: presentation.Currentpollindex.Int32,
 		Polls: func() []model.PresentationResponsePoll {

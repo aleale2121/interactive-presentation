@@ -48,7 +48,7 @@ func (server voteHandler) CreateVoteHandler(c *gin.Context) {
 		case model.ErrNotFound:
 			c.JSON(http.StatusNotFound, gin.H{"error": "Either `presentation_id` or `poll_id` not found"})
 			return
-		case model.ErrConflict:
+		case model.ErrIDMismatch:
 			c.JSON(http.StatusBadRequest, gin.H{"error": "The `poll_id` in the request body doesn't match the current poll."})
 			return
 		default:
@@ -79,12 +79,11 @@ func (server voteHandler) GetPollVotesHandler(c *gin.Context) {
 			case model.ErrNotFound:
 				c.JSON(http.StatusNotFound, gin.H{"error": "Either `presentation_id` or `poll_id` not found"})
 				return
-			case model.ErrConflict:
+			case model.ErrIDMismatch:
 				c.JSON(http.StatusBadRequest, gin.H{"error": "The `poll_id` in the request body doesn't match the current poll."})
 				return
 			default:
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-				c.AbortWithStatus(http.StatusBadRequest)
 				return
 			}
 		}
