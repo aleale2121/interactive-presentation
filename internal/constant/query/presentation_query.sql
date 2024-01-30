@@ -15,7 +15,7 @@ RETURNING id
 data_cte AS
 (
   SELECT
-  to_jsonb($1
+  to_jsonb(sqlc.arg(polls)
 ::jsonb) AS data
 ),
 polls_cte AS
