@@ -18,15 +18,13 @@ type Router struct {
 	MiddleWares gin.HandlersChain
 }
 type routing struct {
-	host    string
-	port    string
+	address string
 	routers []Router
 }
 
-func NewRouting(host, port string, routers []Router) Routers {
+func NewRouting(address string, routers []Router) Routers {
 	return &routing{
-		host,
-		port,
+		address,
 		routers,
 	}
 }
@@ -34,7 +32,7 @@ func NewRouting(host, port string, routers []Router) Routers {
 func (r *routing) Serve() {
 	ginRouter := gin.New()
 	ginRouter.Handle(http.MethodGet, "/ping", HealthCheck)
-	
+
 	for _, router := range r.routers {
 		if router.MiddleWares == nil {
 			ginRouter.Handle(router.Method, router.Path, router.Handle)
@@ -57,12 +55,11 @@ func (r *routing) Serve() {
 	ginRouter.NoMethod(NoMethodHandler)
 	ginRouter.NoRoute(NoRouteHandler)
 
-	addr := fmt.Sprintf("%s:%s", r.host, r.port)
-	err := http.ListenAndServe(addr, &Server{ginRouter})
+	err := http.ListenAndServe(r.address, &Server{ginRouter})
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("started at %s:%s", r.host, r.port)
+	fmt.Printf("started at %s", r.address)
 }
 
 type Server struct {

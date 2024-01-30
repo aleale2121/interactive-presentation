@@ -68,6 +68,6 @@ func Init() {
 	routersList = append(routersList, pollRouting...)
 	routersList = append(routersList, voteRouting...)
 
-	server := routers.NewRouting("localhost", "8080", routersList)
+	server := routers.NewRouting(config.ServerAddress, routersList)
 	server.Serve()
 }

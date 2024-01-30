@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import intiator "github.com/aleale2121/interactive-presentation/initiator"
 
