@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/aleale2121/interactive-presentation/util"
+	"github.com/aleale2121/interactive-presentation/pkg/random"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,7 +26,7 @@ func TestVoteCurrentPollTx(t *testing.T) {
 		PresentationID: createdPresenationID,
 		Pollid:         polls[0].ID,
 		Optionkey:      options[0].Optionkey,
-		Clientid:       util.RandomUUID().String(),
+		Clientid:       random.RandomUUID().String(),
 	})
 	require.Error(t, err)
 
@@ -41,7 +41,7 @@ func TestVoteCurrentPollTx(t *testing.T) {
 			PresentationID: createdPresenationID,
 			Pollid:         currPoll.ID,
 			Optionkey:      options[i].Optionkey,
-			Clientid:       util.RandomUUID().String(),
+			Clientid:       random.RandomUUID().String(),
 		})
 		require.NoError(t, err)
 	}
@@ -73,8 +73,8 @@ func TestVoteDeadlock(t *testing.T) {
 	require.NotEmpty(t, currPoll)
 
 	errs := make(chan error)
-	l:=len(options)
-	
+	l := len(options)
+
 	// run n concurrent vote transaction
 	for i := 0; i < n; i++ {
 		go func(j int) {
@@ -82,10 +82,10 @@ func TestVoteDeadlock(t *testing.T) {
 				PresentationID: createdPresenationID,
 				Pollid:         currPoll.ID,
 				Optionkey:      options[j].Optionkey,
-				Clientid:       util.RandomUUID().String(),
+				Clientid:       random.RandomUUID().String(),
 			})
 			errs <- err
-		}(i%l)
+		}(i % l)
 	}
 
 	for i := 0; i < n; i++ {

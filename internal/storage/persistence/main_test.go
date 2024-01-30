@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/aleale2121/interactive-presentation/util"
+	"github.com/aleale2121/interactive-presentation/pkg/config"
 	_ "github.com/lib/pq"
 )
 
@@ -112,7 +112,7 @@ var testDB *sql.DB
 var presentationData map[int]string
 
 func TestMain(m *testing.M) {
-	config, err := util.LoadConfig("../..")
+	config, err := config.LoadConfig("../..")
 	if err != nil {
 		log.Fatal("cannot load config:", err)
 	}

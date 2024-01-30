@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/aleale2121/interactive-presentation/internal/constant/model"
-	"github.com/aleale2121/interactive-presentation/util"
+	"github.com/aleale2121/interactive-presentation/pkg/random"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,7 +27,7 @@ func createRandomVote(t *testing.T) model.Vote {
 		err = testQueries.CreateVote(context.Background(), CreateVoteParams{
 			Pollid:    polls[0].ID,
 			Optionkey: options[i].Optionkey,
-			Clientid:  util.RandomUUID().String(),
+			Clientid:  random.RandomUUID().String(),
 		})
 		require.NoError(t, err)
 	}
@@ -35,16 +35,16 @@ func createRandomVote(t *testing.T) model.Vote {
 	// create vote with non-existing option key
 	err = testQueries.CreateVote(context.Background(), CreateVoteParams{
 		Pollid:    polls[0].ID,
-		Optionkey: util.RandomUUID().String(),
-		Clientid:  util.RandomUUID().String(),
+		Optionkey: random.RandomUUID().String(),
+		Clientid:  random.RandomUUID().String(),
 	})
 	require.Error(t, err)
 
 	// create vote with non-existing poll id
 	err = testQueries.CreateVote(context.Background(), CreateVoteParams{
-		Pollid:    util.RandomUUID(),
+		Pollid:    random.RandomUUID(),
 		Optionkey: options[0].Optionkey,
-		Clientid:  util.RandomUUID().String(),
+		Clientid:  random.RandomUUID().String(),
 	})
 	require.Error(t, err)
 

@@ -17,12 +17,12 @@ import (
 	db "github.com/aleale2121/interactive-presentation/internal/storage/persistence"
 
 	"github.com/aleale2121/interactive-presentation/platform/routers"
-	"github.com/aleale2121/interactive-presentation/util"
+	"github.com/aleale2121/interactive-presentation/pkg/config"
 )
 
 func Init() {
 	logger := logrus.New()
-	config, err := util.LoadConfig(".")
+	config, err := config.LoadConfig(".")
 	if err != nil {
 		logger.Fatalf("%s cannot load config", err.Error())
 	}
