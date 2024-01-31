@@ -2,7 +2,7 @@
 FROM golang:1.19-alpine3.16 AS builder
 WORKDIR /app
 COPY . .
-RUN go build -o main cmd/main.go && chmod +x /app/main
+RUN  CGO_ENABLED=0 go build -o main cmd/rest/main.go && chmod +x /app/main
 
 
 # Run stage

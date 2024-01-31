@@ -3,12 +3,12 @@ package routing
 import (
 	"net/http"
 
-	rest "github.com/aleale2121/interactive-presentation/internal/handler/rest"
+	v1 "github.com/aleale2121/interactive-presentation/internal/handler/poll/http/v1"
 	"github.com/aleale2121/interactive-presentation/platform/routers"
 	"github.com/gin-gonic/gin"
 )
 
-func PollRouting(handler rest.PollHandler) []routers.Router {
+func PollRouting(handler v1.PollHandler) []routers.Router {
 	return []routers.Router{
 		{
 			Method:      http.MethodGet,

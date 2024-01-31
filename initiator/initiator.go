@@ -10,14 +10,17 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/aleale2121/interactive-presentation/internal/glue/routing"
-	"github.com/aleale2121/interactive-presentation/internal/handler/rest"
+	pollHttpV1 "github.com/aleale2121/interactive-presentation/internal/handler/poll/http/v1"
+	presentationHttpV1 "github.com/aleale2121/interactive-presentation/internal/handler/presentation/http/v1"
+	voteHttpV1 "github.com/aleale2121/interactive-presentation/internal/handler/vote/http/v1"
+
 	"github.com/aleale2121/interactive-presentation/internal/module/poll"
 	"github.com/aleale2121/interactive-presentation/internal/module/presentation"
 	"github.com/aleale2121/interactive-presentation/internal/module/vote"
 	db "github.com/aleale2121/interactive-presentation/internal/storage/persistence"
 
-	"github.com/aleale2121/interactive-presentation/platform/routers"
 	"github.com/aleale2121/interactive-presentation/pkg/config"
+	"github.com/aleale2121/interactive-presentation/platform/routers"
 )
 
 func Init() {
@@ -52,15 +55,15 @@ func Init() {
 	store := db.NewStore(conn)
 
 	presentationUseCase := presentation.Initialize(store)
-	presentationHandler := rest.NewPresentationHandler(logger, presentationUseCase)
+	presentationHandler := presentationHttpV1.NewPresentationHandler(logger, presentationUseCase)
 	presentationRouting := routing.PresentationRouting(presentationHandler)
 
 	pollUseCase := poll.Initialize(store)
-	pollHandler := rest.NewPollsHandler(logger, pollUseCase)
+	pollHandler := pollHttpV1.NewPollsHandler(logger, pollUseCase)
 	pollRouting := routing.PollRouting(pollHandler)
 
 	voteUseCase := vote.Initialize(store)
-	voteHandler := rest.NewVoteHandler(logger, voteUseCase)
+	voteHandler := voteHttpV1.NewVoteHandler(logger, voteUseCase)
 	voteRouting := routing.VoteRouting(voteHandler)
 
 	var routersList []routers.Router
