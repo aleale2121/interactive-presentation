@@ -1,10 +1,12 @@
 package model
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 // PresentionResponseDTO represents the request model for creating a presentation.
 type PresentionResponseDTO struct {
-	CurrentPollIndex int32              `json:"current_poll_index"`
+	CurrentPollIndex int32                      `json:"current_poll_index"`
 	Polls            []PresentationResponsePoll `json:"polls"`
 }
 
@@ -19,13 +21,7 @@ type PresentationResponsePoll struct {
 	Options  json.RawMessage `json:"options" binding:"required,dive"`
 }
 
-type PollOption struct {
-	Optionkey   string `json:"optionkey" db:"optionkey"`
-	Optionvalue string `json:"optionvalue" db:"optionvalue"`
-}
-
 type CurrentPoll struct {
-	ID       string       `json:"id"`
-	Question string       `json:"question"`
-	Options  []PollOption `json:"options"`
+	ID string `json:"id"`
+	Poll
 }

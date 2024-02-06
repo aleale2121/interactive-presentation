@@ -31,23 +31,21 @@ func NewRouting(address string, routers []Router) Routers {
 
 func (r *routing) Serve() {
 	ginRouter := gin.New()
+	ginRouter.Use(gin.Logger())
+	ginRouter.Use(gin.Recovery())
 	ginRouter.Handle(http.MethodGet, "/ping", HealthCheck)
 
 	for _, router := range r.routers {
 		if router.MiddleWares == nil {
 			ginRouter.Handle(router.Method, router.Path, router.Handle)
 		} else {
-			// s := middleware.NewStack()
+			var handlers []gin.HandlerFunc
 			for _, middle := range router.MiddleWares {
-				ginRouter.Use(middle)
+				handlers = append(handlers, middle)
 			}
-			ginRouter.Use(gin.Logger())
-			ginRouter.Use(gin.Recovery())
+			handlers = append(handlers, router.Handle)
 
-			// s.Use(wares.RequestID)
-			// s.Use(wares.Logging)
-			ginRouter.Handle(router.Method, router.Path, router.Handle)
-
+			ginRouter.Handle(router.Method, router.Path, handlers...)
 		}
 	}
 

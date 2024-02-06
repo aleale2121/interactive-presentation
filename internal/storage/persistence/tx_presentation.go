@@ -19,7 +19,7 @@ func (store *SQLStore) GetCurrentPoll(ctx context.Context, id uuid.UUID) (model.
 		}
 		result.ID = poll.ID.String()
 		result.Question = poll.Question
-		var optionRows []model.PollOption
+		var optionRows []model.Option
 		err = json.Unmarshal(poll.Options, &optionRows)
 		if err != nil {
 			return err

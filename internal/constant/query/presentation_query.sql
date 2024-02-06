@@ -70,8 +70,8 @@ SELECT
   p.question AS question,
   (
     SELECT jsonb_agg(jsonb_build_object(
-      'optionkey', o.optionkey,
-      'optionvalue', o.optionvalue
+      'key', o.optionkey,
+      'value', o.optionvalue
     )) AS options
   FROM options o
   WHERE o.pollid = p.id
@@ -98,8 +98,8 @@ SELECT
   p.question AS question,
   (
     SELECT jsonb_agg(jsonb_build_object(
-      'optionkey', o.optionkey,
-      'optionvalue', o.optionvalue
+      'key', o.optionkey,
+      'value', o.optionvalue
     )) AS options
   FROM options o
     INNER JOIN polls p ON o.pollid = p.id
@@ -122,8 +122,8 @@ SELECT
   p.question AS question,
   (
     SELECT jsonb_agg(jsonb_build_object(
-      'optionkey', o.optionkey,
-      'optionvalue', o.optionvalue
+      'key', o.optionkey,
+      'value', o.optionvalue
     )) AS options
   FROM options o
     INNER JOIN polls p ON o.pollid = p.id
@@ -138,8 +138,8 @@ SELECT
   p.id AS id,
   p.question,
   jsonb_agg(jsonb_build_object(
-        'optionKey', o.optionKey,
-        'optionValue', o.optionValue
+        'key', o.optionKey,
+        'value', o.optionValue
     )) AS options
 FROM
   polls p
