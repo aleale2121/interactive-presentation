@@ -3,7 +3,6 @@ package persistence
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/aleale2121/interactive-presentation/internal/constant/model"
 	"github.com/google/uuid"
@@ -24,7 +23,6 @@ func (store *SQLStore) GetCurrentPoll(ctx context.Context, id uuid.UUID) (model.
 		if err != nil {
 			return err
 		}
-		fmt.Println(optionRows)
 		result.Options = optionRows
 		return err
 	})
