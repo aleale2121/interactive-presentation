@@ -37,6 +37,7 @@ func (r *routing) Serve() {
 	ginRouter := gin.New()
 	ginRouter.Use(gin.Logger())
 	ginRouter.Use(gin.Recovery())
+	ginRouter.Use(CORSHandler)
 	ginRouter.Handle(http.MethodGet, "/ping", HealthCheck)
 
 	for _, router := range r.routers {
@@ -56,21 +57,19 @@ func (r *routing) Serve() {
 	// NoRoute and NoMethod handlers
 	ginRouter.NoMethod(NoMethodHandler)
 	ginRouter.NoRoute(NoRouteHandler)
-
-	err := http.ListenAndServe(r.address, &Server{ginRouter})
+	err :=ginRouter.Run(r.address)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Printf("started at %s", r.address)
+	ginRouter.Run(r.address)
 }
 
-type Server struct {
-	r *gin.Engine
-}
 
-func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	s.r.ServeHTTP(w, r)
+// CORSHandler handles requests with unsupported HTTP methods.
+func CORSHandler(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Next()
 }
 
 // NoMethodHandler handles requests with unsupported HTTP methods.
