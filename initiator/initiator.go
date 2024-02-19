@@ -10,11 +10,9 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/aleale2121/interactive-presentation/internal/glue/routing"
-	pollHttpV1 "github.com/aleale2121/interactive-presentation/internal/handler/poll/http/v1"
 	presentationHttpV1 "github.com/aleale2121/interactive-presentation/internal/handler/presentation/http/v1"
 	voteHttpV1 "github.com/aleale2121/interactive-presentation/internal/handler/vote/http/v1"
 
-	"github.com/aleale2121/interactive-presentation/internal/module/poll"
 	"github.com/aleale2121/interactive-presentation/internal/module/presentation"
 	"github.com/aleale2121/interactive-presentation/internal/module/vote"
 	db "github.com/aleale2121/interactive-presentation/internal/storage/persistence"
@@ -58,9 +56,7 @@ func Init() {
 	presentationHandler := presentationHttpV1.NewPresentationHandler(logger, presentationUseCase)
 	presentationRouting := routing.PresentationRouting(presentationHandler)
 
-	pollUseCase := poll.Initialize(store)
-	pollHandler := pollHttpV1.NewPollsHandler(logger, pollUseCase)
-	pollRouting := routing.PollRouting(pollHandler)
+
 
 	voteUseCase := vote.Initialize(store)
 	voteHandler := voteHttpV1.NewVoteHandler(logger, voteUseCase)
@@ -68,7 +64,6 @@ func Init() {
 
 	var routersList []routers.Router
 	routersList = append(routersList, presentationRouting...)
-	routersList = append(routersList, pollRouting...)
 	routersList = append(routersList, voteRouting...)
 
 	server := routers.NewRouting(config.ServerAddress, routersList)

@@ -13,6 +13,8 @@ import (
 type Usecase interface {
 	CreatePresentation(ctx context.Context, presenation *model.CreatePresentionRequestDTO) (uuid.UUID, error)
 	GetPresentation(ctx context.Context, presenationID uuid.UUID) (model.PresentionResponseDTO, error)
+	GetCurrentPoll(ctx context.Context, presentationID uuid.UUID) (model.CurrentPoll, error)
+	UpdateCurrentPoll(ctx context.Context, presentationID uuid.UUID) (model.CurrentPoll, error)
 }
 
 type service struct {
@@ -68,4 +70,33 @@ func (s service) GetPresentation(ctx context.Context, presentationID uuid.UUID) 
 			return pollList
 		}(),
 	}, nil
+}
+
+
+func (s service) GetCurrentPoll(ctx context.Context, presentationID uuid.UUID) (model.CurrentPoll, error) {
+	presentation, err := s.store.GetPresentation(context.Background(), presentationID)
+	if err != nil {
+		return model.CurrentPoll{}, model.ErrNotFound
+	}
+	if presentation.Currentpollindex.Int32 == 0 {
+		return model.CurrentPoll{}, model.ErrNoPollDisplayed
+	}
+	currentPoll, err := s.store.GetCurrentPoll(context.Background(), presentationID)
+	if err != nil {
+		return model.CurrentPoll{}, err
+	}
+	return currentPoll, nil
+
+}
+func (s service) UpdateCurrentPoll(ctx context.Context, presentationID uuid.UUID) (model.CurrentPoll, error) {
+	_, err := s.store.GetPresentation(context.Background(), presentationID)
+	if err != nil {
+		return model.CurrentPoll{}, model.ErrNotFound
+	}
+
+	currentPoll, err := s.store.UpdateCurrentPollToForwardTx(context.Background(), presentationID)
+	if err != nil {
+		return model.CurrentPoll{}, model.ErrRunOutOfIndex
+	}
+	return currentPoll, nil
 }

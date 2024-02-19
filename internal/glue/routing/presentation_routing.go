@@ -23,5 +23,17 @@ func PresentationRouting(handler v1.PresentationHandler) []routers.Router {
 			Handle:      handler.GetPresentationHandler,
 			MiddleWares: []gin.HandlerFunc{},
 		},
+		{
+			Method:      http.MethodGet,
+			Path:        "/presentations/:presentation_id/polls/current",
+			Handle:      handler.GetCurrentPollHandler,
+			MiddleWares: []gin.HandlerFunc{},
+		},
+		{
+			Method:      http.MethodPut,
+			Path:        "/presentations/:presentation_id/polls/current",
+			Handle:      handler.UpdateCurrentPollHandler,
+			MiddleWares: []gin.HandlerFunc{},
+		},
 	}
 }

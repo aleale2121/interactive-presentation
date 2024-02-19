@@ -14,6 +14,8 @@ import (
 type PresentationHandler interface {
 	CreatePresentationHandler(c *gin.Context)
 	GetPresentationHandler(c *gin.Context)
+	UpdateCurrentPollHandler(c *gin.Context)
+	GetCurrentPollHandler(c *gin.Context)
 }
 
 type presentationHandler struct {
@@ -75,4 +77,58 @@ func (server presentationHandler) GetPresentationHandler(c *gin.Context) {
 		}
 	}
 	c.JSON(http.StatusOK, presentationWithPoll)
+}
+
+// UpdateCurrentPollHandler handles the HTTP request for updating the current poll index to move forward.
+func (server presentationHandler) UpdateCurrentPollHandler(c *gin.Context) {
+	presentationID, err := uuid.Parse(c.Param("presentation_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	currentPoll, err := server.useCase.UpdateCurrentPoll(context.Background(), presentationID)
+	if err != nil {
+		switch err {
+		case model.ErrNotFound:
+			c.JSON(http.StatusNotFound, gin.H{"error": "there is no presentation with the provided `presentation_id`"})
+			return
+		case model.ErrRunOutOfIndex:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "The presentation ran out of polls."})
+			return
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}		
+	}
+
+	c.JSON(http.StatusOK, currentPoll)
+}
+
+// GetCurrentPollHandler handles the HTTP request for retrieving the current poll of a presentation.
+func (server presentationHandler) GetCurrentPollHandler(c *gin.Context) {
+	presentationID, err := uuid.Parse(c.Param("presentation_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, err.Error())
+		return
+	}
+
+	currentPoll, err := server.useCase.GetCurrentPoll(context.Background(), presentationID)
+	if err != nil {
+		switch err {
+		case model.ErrNotFound:
+			c.JSON(http.StatusNotFound, gin.H{"error": "there is no presentation with the provided `presentation_id`"})
+			return
+		case model.ErrNoPollDisplayed:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "there are no polls currently displayed"})
+			return
+		case model.ErrRunOutOfIndex:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "The presentation ran out of polls."})
+			return
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+	}
+	c.JSON(http.StatusOK, currentPoll)
 }
