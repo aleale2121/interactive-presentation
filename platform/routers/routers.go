@@ -24,6 +24,7 @@ type routing struct {
 	routers []Route
 }
 
+// NewRouting is for creating new routing
 func NewRouting(address string, routers []Route) Router {
 	return &routing{
 		address,
@@ -31,6 +32,7 @@ func NewRouting(address string, routers []Route) Router {
 	}
 }
 
+// Serve is to start serving the HTTP Listener for every domain
 func (r *routing) Serve() {
 	ginRouter := gin.New()
 	ginRouter.Use(gin.Logger())
