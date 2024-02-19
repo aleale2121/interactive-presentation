@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// PresentationRouting returns the list of routers for domain presentation
 func PresentationRouting(handler v1.PresentationHandler) []routers.Route {
 	return []routers.Route{
 		{

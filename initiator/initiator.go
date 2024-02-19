@@ -56,8 +56,6 @@ func Init() {
 	presentationHandler := presentationHttpV1.NewPresentationHandler(logger, presentationUseCase)
 	presentationRouting := routing.PresentationRouting(presentationHandler)
 
-
-
 	voteUseCase := vote.Initialize(store)
 	voteHandler := voteHttpV1.NewVoteHandler(logger, voteUseCase)
 	voteRouting := routing.VoteRouting(voteHandler)

@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// VoteRouting returns the list of routers for domain vote
 func VoteRouting(handler v1.VoteHandler) []routers.Route {
 	return []routers.Route{
 		{
