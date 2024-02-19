@@ -9,8 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func VoteRouting(handler v1.VoteHandler) []routers.Router {
-	return []routers.Router{
+func VoteRouting(handler v1.VoteHandler) []routers.Route {
+	return []routers.Route{
 		{
 			Method:      http.MethodPost,
 			Path:        "/presentations/:presentation_id/polls/current/votes",

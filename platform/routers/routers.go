@@ -7,11 +7,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type Routers interface {
+// Router contains the functions of http handler to clean payloads and pass it the service
+type Router interface {
 	Serve()
 }
 
-type Router struct {
+// Route data will be registered to http listener
+type Route struct {
 	Method      string
 	Path        string
 	Handle      gin.HandlerFunc
@@ -19,10 +21,10 @@ type Router struct {
 }
 type routing struct {
 	address string
-	routers []Router
+	routers []Route
 }
 
-func NewRouting(address string, routers []Router) Routers {
+func NewRouting(address string, routers []Route) Router {
 	return &routing{
 		address,
 		routers,

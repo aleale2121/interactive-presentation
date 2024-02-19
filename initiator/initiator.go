@@ -62,7 +62,7 @@ func Init() {
 	voteHandler := voteHttpV1.NewVoteHandler(logger, voteUseCase)
 	voteRouting := routing.VoteRouting(voteHandler)
 
-	var routersList []routers.Router
+	var routersList []routers.Route
 	routersList = append(routersList, presentationRouting...)
 	routersList = append(routersList, voteRouting...)
 

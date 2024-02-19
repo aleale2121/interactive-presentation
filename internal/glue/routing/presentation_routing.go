@@ -9,8 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func PresentationRouting(handler v1.PresentationHandler) []routers.Router {
-	return []routers.Router{
+func PresentationRouting(handler v1.PresentationHandler) []routers.Route {
+	return []routers.Route{
 		{
 			Method:      http.MethodPost,
 			Path:        "/presentations",
