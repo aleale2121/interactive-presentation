@@ -27,6 +27,7 @@ func Init() {
 	if err != nil {
 		logger.Fatalf("%s cannot load config", err.Error())
 	}
+	
 	conn, err := sql.Open(config.DBDriver, config.DBSource)
 	if err != nil {
 		logger.Fatal("conn error: ", err)
