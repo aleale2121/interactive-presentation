@@ -59,12 +59,14 @@ Docker Compose simplifies the management of multi-container Docker applications.
 
 Refer to the [Medium blog](https://medium.com/@alefewyimer2/golang-hexagonal-architecture-sqlc-docker-gin-rest-api-interactive-presentation-787bb635080d) post for detailed setup instructions.
 
-## Iterating
+## Running and Stopping
 
 After making changes to the source code:
 
 - Use `docker-compose build` to rebuild container images.
 - Use `docker-compose up` to restart the stack with the new images.
+- or `docker-compose up --build` in one line.
+- Use `docker-compose down` to stop.
 
 ## Conclusion
 
