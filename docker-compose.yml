@@ -2,18 +2,14 @@ version: "3.3"
 services:
   postgres:
     image: postgres:14-alpine
-    environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=secret
-      - POSTGRES_DB=interactive_presenations
+    env_file:
+      - app.env
   api:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "8081:8081"
-    environment:
-      - DB_SOURCE=postgresql://root:secret@postgres:5432/interactive_presenations?sslmode=disable
     depends_on:
       - postgres
     restart: on-failure
