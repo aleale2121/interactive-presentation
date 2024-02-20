@@ -4,14 +4,12 @@ WORKDIR /app
 COPY go.mod go.sum ./ 
 RUN go mod download
 COPY . .
-RUN  CGO_ENABLED=0 go build -o main cmd/rest/main.go && chmod +x /app/main
+RUN  CGO_ENABLED=0 go build -o main cmd/rest/main.go 
 
 # Run stage
 FROM alpine:3.16
 WORKDIR /app
 COPY --from=builder /app/main .
-COPY app.env start.sh wait-for.sh ./
+COPY app.env wait-for.sh ./ 
 COPY db/migration ./db/migration
-EXPOSE 8081
-CMD [ "/app/main" ]
-ENTRYPOINT [ "/app/start.sh" ]
+ENTRYPOINT [ "/app/main" ]

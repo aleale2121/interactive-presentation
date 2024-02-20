@@ -22,6 +22,5 @@ services:
         "/app/wait-for.sh",
         "postgres:5432",
         "--",
-        "/app/start.sh"
+        "/app/main"
       ]
-    command: [ "/app/main" ]
